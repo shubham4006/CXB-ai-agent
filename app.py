@@ -195,49 +195,35 @@ elif menu == "RFP Insights Engine":
             height=250
         )
 
-        if st.button("Evaluate RFP/RFQ"):
+        if st.button("Evaluate RFP"):
 
-            prompt = f"""
-Act as a senior consulting bid director and transformation advisor.
+    st.write("✅ Button clicked")
 
-Review the following RFP / RFQ document and provide a solution-oriented response for CXBERRIES.
+    st.write("⏳ Preparing prompt...")
 
-RFP/RFQ Content:
-{content[:5000]}
+    prompt = f"""
+    Act as a senior consulting bid manager.
 
-Create a structured response with:
+    Review the following RFP:
 
-1. Executive Summary
-2. Client Business Objectives
-3. Scope of Work
-4. Mandatory Requirements
-5. Key Risks / Red Flags
-6. Clarification Questions
-7. CXBerries Strength Fitment
-8. Recommended Bid Strategy
-9. Estimated Complexity (Low / Medium / High)
+    {content[:8000]}
 
-10. Proposed Solution Approach
-   - Current State Assessment
-   - Future State Design
-   - Transition Plan
-   - Governance Model
-   - KPI Framework
+    Provide:
 
-11. Indicative Implementation Phases
-   (30-60-90 day roadmap)
+    1. Executive Summary
+    2. Scope of Work
+    3. Key Risks
+    4. Recommended Solution
+    5. Win Strategy
+    """
 
-12. Transformation Opportunities
-   - Automation
-   - AI use cases
-   - Process improvement
-13. Suggested Executive Summary for Proposal Submission
+    st.write("🚀 Sending to AI...")
 
-14. Create tables wherever useful.
+    try:
+        result = ask_ai(prompt)
 
-15. Create simple text diagrams wherever useful such as:
+        st.subheader("📌 RFP Evaluation Output")
+        st.write(result)
 
-Current State --> Transition --> Future State
-
-16. Keep tone professional, consulting-grade, concise and actionable.
-"""
+    except Exception as e:
+        st.error(f"Error: {str(e)}")
