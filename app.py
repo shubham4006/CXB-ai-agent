@@ -143,9 +143,6 @@ elif menu == "RFP Insights Engine":
         type=["pdf", "docx", "txt"]
     )
 
-    # ---------------------------
-    # PDF Reader
-    # ---------------------------
     def read_pdf(file):
         text = ""
         reader = PdfReader(file)
@@ -157,21 +154,10 @@ elif menu == "RFP Insights Engine":
 
         return text
 
-    # ---------------------------
-    # DOCX Reader
-    # ---------------------------
     def read_docx(file):
         doc = docx.Document(file)
+        return "\n".join([para.text for para in doc.paragraphs])
 
-        text = "\n".join(
-            [para.text for para in doc.paragraphs]
-        )
-
-        return text
-
-    # ---------------------------
-    # MAIN LOGIC
-    # ---------------------------
     if uploaded_file:
 
         file_name = uploaded_file.name.lower()
@@ -185,21 +171,15 @@ elif menu == "RFP Insights Engine":
         else:
             content = uploaded_file.read().decode("utf-8")
 
-        st.success("✅ File uploaded and read successfully")
-
-        st.subheader("📄 Preview Content")
+        st.success("✅ File uploaded successfully")
 
         st.text_area(
-            "Extracted Text",
+            "Preview Content",
             content[:3000],
             height=250
         )
 
-            if st.button("Evaluate RFP"):
-
-            st.write("✅ Button clicked")
-
-            st.write("⏳ Preparing prompt...")
+        if st.button("Evaluate RFP"):
 
             prompt = f"""
             Act as a senior consulting bid manager.
@@ -209,24 +189,14 @@ elif menu == "RFP Insights Engine":
             {content[:5000]}
 
             Provide:
-
             1. Executive Summary
             2. Scope of Work
-            3. Mandatory Requirements
-            4. Key Risks / Red Flags
-            5. Clarification Questions
-            6. CXBerries Strength Fitment
-            7. Recommended Bid Strategy
-            8. Estimated Complexity
+            3. Key Risks
+            4. Recommended Solution
+            5. Win Strategy
             """
 
-            st.write("🚀 Sending to AI...")
+            result = ask_ai(prompt)
 
-            try:
-                result = ask_ai(prompt)
-
-                st.subheader("📌 RFP Evaluation Output")
-                st.write(result)
-
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
+            st.subheader("📌 RFP Evaluation Output")
+            st.write(result)
