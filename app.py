@@ -90,15 +90,41 @@ elif menu == "Assessment Engine":
 
     if st.button("Run Assessment"):
 
-        score = (incident+change+cmdb+automation+reporting)/5
+        score = (incident + change + cmdb + automation + reporting) / 5
+
         st.metric("Overall Score", round(score,2))
 
         labels = ['Incident','Change','CMDB','Automation','Reporting']
-        vals = [incident,change,cmdb,automation,reporting]
+        vals = [incident, change, cmdb, automation, reporting]
 
         fig, ax = plt.subplots()
         ax.bar(labels, vals)
         st.pyplot(fig)
+
+        # -----------------------------
+        # ADD THIS AI PART HERE
+        # -----------------------------
+        prompt = f"""
+        Analyze these ITSM maturity scores:
+
+        Incident Management: {incident}
+        Change Management: {change}
+        CMDB: {cmdb}
+        Automation: {automation}
+        Reporting: {reporting}
+
+        Give:
+        1. Current maturity summary
+        2. Top 3 gaps
+        3. Recommended actions
+        4. 90-day roadmap
+        """
+
+        with st.spinner("Generating Recommendations..."):
+            result = ask_ai(prompt)
+
+        st.subheader("📌 AI Recommendations")
+        st.write(result)
 
 # ==========================================
 # DATA INSIGHTS
@@ -111,4 +137,25 @@ elif menu == "Data Insights":
 
     if file:
         df = pd.read_csv(file)
-        st.dataframe(df.head())
+        st.dataframe(df)
+
+        if st.button("Generate Insights"):
+
+            prompt = f"""
+            Analyze this dataset.
+
+            Columns: {list(df.columns)}
+            Rows: {len(df)}
+
+            Sample Data:
+            {df.head(10).to_string()}
+
+            Give:
+            1. Trends
+            2. Risks
+            3. Improvement Opportunities
+            4. Executive Summary
+            """
+
+            result = ask_ai(prompt)
+            st.write(result)
