@@ -224,38 +224,20 @@ Create a structured response with:
    - Governance Model
    - KPI Framework
 
-11. Suggested Delivery Operating Model
-   (Onsite / Offshore / Hybrid)
-
-12. Recommended Team Structure
-   (Roles and responsibilities table)
-
-13. Indicative Implementation Phases
+11. Indicative Implementation Phases
    (30-60-90 day roadmap)
 
-14. Commercial Considerations
-   - Effort drivers
-   - Cost levers
-   - Assumptions
-
-15. Transformation Opportunities
+12. Transformation Opportunities
    - Automation
    - AI use cases
    - Process improvement
+13. Suggested Executive Summary for Proposal Submission
 
-16. Risks Mitigation Plan
-   (Risk | Mitigation table)
+14. Create tables wherever useful.
 
-17. Win Themes for Proposal
-   (Where we standout)
-
-18. Suggested Executive Summary for Proposal Submission
-
-19. Create tables wherever useful.
-
-20. Create simple text diagrams wherever useful such as:
+15. Create simple text diagrams wherever useful such as:
 
 Current State --> Transition --> Future State
 
-21. Keep tone professional, consulting-grade, concise and actionable.
+16. Keep tone professional, consulting-grade, concise and actionable.
 """
