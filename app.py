@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
+import google.generativeai 
 import pandas as pd
 import matplotlib.pyplot as plt
 
