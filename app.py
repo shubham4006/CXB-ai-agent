@@ -1,155 +1,114 @@
 import streamlit as st
-import google.generativeai as genai
+from openai import OpenAI
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# ------------------------
-# PAGE CONFIG
-# ------------------------
-st.set_page_config(
-    page_title="CXBerries AI Accelerator",
-    layout="wide"
-)
+# -----------------------
+# PAGE
+# -----------------------
+st.set_page_config(page_title="CXBerries AI Accelerator", layout="wide")
 
-st.title("CXBerries AI Consulting Accelerator")
+st.title("🚀 CXBerries AI Consulting Accelerator")
 st.subheader("Reduce proposal, assessment & analysis effort by 50–70%")
 
-# ------------------------
-# GEMINI API
-# ------------------------
-api_key = st.secrets["GEMINI_API_KEY"]
-
-genai.configure(api_key=api_key)
-
-model = genai.GenerativeModel("gemini-pro")
+# -----------------------
+# OPENROUTER CLIENT
+# -----------------------
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=st.secrets["OPENROUTER_API_KEY"]
+)
 
 def ask_ai(prompt):
     try:
-        response = model.generate_content(prompt)
-        return response.text
+        completion = client.chat.completions.create(
+            model="openai/gpt-3.5-turbo",
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        return completion.choices[0].message.content
     except Exception as e:
         return f"Error: {str(e)}"
 
-# ------------------------
-# SIDEBAR MENU
-# ------------------------
+# -----------------------
+# MENU
+# -----------------------
 menu = st.sidebar.selectbox(
     "Select Module",
-    [
-        "Proposal Generator",
-        "Assessment Engine",
-        "Data Insights"
-    ]
+    ["Proposal Generator", "Assessment Engine", "Data Insights"]
 )
 
-# ==================================================
-# MODULE 1
-# ==================================================
+# ==========================================
+# PROPOSAL GENERATOR
+# ==========================================
 if menu == "Proposal Generator":
 
     st.header("📄 Proposal Generator")
 
-    client = st.text_input("Client Name")
+    client_name = st.text_input("Client Name")
     industry = st.text_input("Industry")
     problem = st.text_area("Problem Statement")
     scope = st.text_area("Scope Needed")
 
     if st.button("Generate Proposal"):
 
-        prompt = f'''
-        Create a consulting proposal.
+        prompt = f"""
+        Create a premium consulting proposal.
 
-        Client: {client}
+        Client: {client_name}
         Industry: {industry}
         Problem: {problem}
         Scope: {scope}
 
         Include:
-        1. Executive Summary
-        2. Scope of Work
-        3. Deliverables
-        4. Timeline
-        5. Team Structure
-        6. Risks
-        '''
+        1 Executive Summary
+        2 Scope of Work
+        3 Deliverables
+        4 Timeline
+        5 Team Structure
+        6 Risks
+        """
 
-        result = ask_ai(prompt)
+        with st.spinner("Generating Proposal..."):
+            result = ask_ai(prompt)
+
         st.write(result)
 
-# ==================================================
-# MODULE 2
-# ==================================================
+# ==========================================
+# ASSESSMENT
+# ==========================================
 elif menu == "Assessment Engine":
 
-    st.header("📊 ITSM Assessment Engine")
+    st.header("📊 Assessment Engine")
 
-    incident = st.slider("Incident Management",1,5,3)
-    change = st.slider("Change Management",1,5,3)
-    cmdb = st.slider("CMDB Accuracy",1,5,3)
+    incident = st.slider("Incident Mgmt",1,5,3)
+    change = st.slider("Change Mgmt",1,5,3)
+    cmdb = st.slider("CMDB",1,5,3)
     automation = st.slider("Automation",1,5,3)
     reporting = st.slider("Reporting",1,5,3)
 
     if st.button("Run Assessment"):
 
         score = (incident+change+cmdb+automation+reporting)/5
-
         st.metric("Overall Score", round(score,2))
 
         labels = ['Incident','Change','CMDB','Automation','Reporting']
-        values = [incident,change,cmdb,automation,reporting]
+        vals = [incident,change,cmdb,automation,reporting]
 
         fig, ax = plt.subplots()
-        ax.bar(labels, values)
+        ax.bar(labels, vals)
         st.pyplot(fig)
 
-        prompt = f'''
-        Based on scores:
-
-        Incident {incident}
-        Change {change}
-        CMDB {cmdb}
-        Automation {automation}
-        Reporting {reporting}
-
-        Provide:
-        1. Maturity Summary
-        2. Key Gaps
-        3. Recommendations
-        4. 90-Day Roadmap
-        '''
-
-        result = ask_ai(prompt)
-        st.write(result)
-
-# ==================================================
-# MODULE 3
-# ==================================================
+# ==========================================
+# DATA INSIGHTS
+# ==========================================
 elif menu == "Data Insights":
 
-    st.header("📈 Data Insights Copilot")
+    st.header("📈 Data Insights")
 
     file = st.file_uploader("Upload CSV", type=["csv"])
 
     if file:
-
         df = pd.read_csv(file)
-
         st.dataframe(df.head())
-
-        if st.button("Generate Insights"):
-
-            prompt = f'''
-            Analyze this business dataset.
-
-            Columns: {list(df.columns)}
-            Rows: {len(df)}
-
-            Give:
-            1. Trends
-            2. Risks
-            3. Opportunities
-            4. Executive Summary
-            '''
-
-            result = ask_ai(prompt)
-            st.write(result)
