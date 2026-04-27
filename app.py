@@ -23,11 +23,11 @@ genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-1.5-flash-latest")
 
 def ask_ai(prompt):
-   try:
+    try:
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
-        return f"AI Error: {str(e)}"
+        return f"Error: {str(e)}"
 
 # ------------------------
 # SIDEBAR MENU
