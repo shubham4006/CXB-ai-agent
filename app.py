@@ -195,7 +195,7 @@ elif menu == "RFP Insights Engine":
             height=250
         )
 
-        if st.button("Evaluate RFP"):
+        if st.button("Evaluate RFP/RFQ"):
 
             prompt = f"""
 Act as a senior consulting bid director and transformation advisor.
@@ -203,7 +203,7 @@ Act as a senior consulting bid director and transformation advisor.
 Review the following RFP / RFQ document and provide a solution-oriented response for CXBERRIES.
 
 RFP/RFQ Content:
-{content[:15000]}
+{content[:5000]}
 
 Create a structured response with:
 
