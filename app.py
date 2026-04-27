@@ -38,8 +38,12 @@ def ask_ai(prompt):
 # -----------------------
 menu = st.sidebar.selectbox(
     "Select Module",
-   ["Proposal Generator", "Assessment Engine", "RFP Insights Engine"]
-
+    [
+        "Proposal Generator",
+        "Assessment Engine",
+        "RFP Insights Engine"
+    ]
+)
 # ==========================================
 # PROPOSAL GENERATOR
 # ==========================================
