@@ -220,9 +220,11 @@ elif menu == "RFP Insights Engine":
 
     st.write("🚀 Sending to AI...")
 
+try:
     result = ask_ai(prompt)
 
     st.subheader("📌 RFP Evaluation Output")
     st.write(result)
 
-    (e)}")
+except Exception as e:
+    st.error(f"Error: {str(e)}")
