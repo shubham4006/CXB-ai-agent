@@ -195,36 +195,38 @@ elif menu == "RFP Insights Engine":
             height=250
         )
 
-        if st.button("Evaluate RFP"):
             if st.button("Evaluate RFP"):
 
-    st.write("✅ Button clicked")
+            st.write("✅ Button clicked")
 
-    st.write("⏳ Preparing prompt...")
+            st.write("⏳ Preparing prompt...")
 
-    prompt = f"""
-    Act as a senior consulting bid manager.
+            prompt = f"""
+            Act as a senior consulting bid manager.
 
-    Review the following RFP:
+            Review the following RFP:
 
-    {content[:5000]}
+            {content[:5000]}
 
-    Provide:
+            Provide:
 
-    1. Executive Summary
-    2. Scope of Work
-    3. Key Risks
-    4. Recommended Solution
-    5. Win Strategy
-    """
+            1. Executive Summary
+            2. Scope of Work
+            3. Mandatory Requirements
+            4. Key Risks / Red Flags
+            5. Clarification Questions
+            6. CXBerries Strength Fitment
+            7. Recommended Bid Strategy
+            8. Estimated Complexity
+            """
 
-    st.write("🚀 Sending to AI...")
+            st.write("🚀 Sending to AI...")
 
-try:
-    result = ask_ai(prompt)
+            try:
+                result = ask_ai(prompt)
 
-    st.subheader("📌 RFP Evaluation Output")
-    st.write(result)
+                st.subheader("📌 RFP Evaluation Output")
+                st.write(result)
 
-except Exception as e:
-    st.error(f"Error: {str(e)}")
+            except Exception as e:
+                st.error(f"Error: {str(e)}")
