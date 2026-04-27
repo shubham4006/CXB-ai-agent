@@ -11,13 +11,13 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("🚀 CXBerries AI Consulting Accelerator")
+st.title("CXBerries AI Consulting Accelerator")
 st.subheader("Reduce proposal, assessment & analysis effort by 50–70%")
 
 # ------------------------
 # GEMINI API
 # ------------------------
-api_key = st.secrets["GEMINI_API_KEY"]
+api_key = st.secrets["AIzaSyCTk13nT5j5P3GDO5wmBYnbZk7DEJjF6tI"]
 
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-1.5-flash")
