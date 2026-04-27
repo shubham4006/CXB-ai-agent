@@ -196,6 +196,7 @@ elif menu == "RFP Insights Engine":
         )
 
         if st.button("Evaluate RFP"):
+            if st.button("Evaluate RFP"):
 
     st.write("✅ Button clicked")
 
@@ -206,7 +207,7 @@ elif menu == "RFP Insights Engine":
 
     Review the following RFP:
 
-    {content[:8000]}
+    {content[:5000]}
 
     Provide:
 
@@ -219,11 +220,9 @@ elif menu == "RFP Insights Engine":
 
     st.write("🚀 Sending to AI...")
 
-    try:
-        result = ask_ai(prompt)
+    result = ask_ai(prompt)
 
-        st.subheader("📌 RFP Evaluation Output")
-        st.write(result)
+    st.subheader("📌 RFP Evaluation Output")
+    st.write(result)
 
-    except Exception as e:
-        st.error(f"Error: {str(e)}")
+    (e)}")
