@@ -10,7 +10,7 @@ import docx
 # -----------------------
 st.set_page_config(page_title="CXBerries AI Accelerator", layout="wide")
 
-st.title("🚀 CXBerries AI Consulting Accelerator")
+st.title("🚀 CXBERRIES AI Consulting Accelerator")
 st.subheader("Reduce proposal, assessment & analysis effort by 50–70%")
 
 # -----------------------
@@ -198,28 +198,64 @@ elif menu == "RFP Insights Engine":
         if st.button("Evaluate RFP"):
 
             prompt = f"""
-            Act as a senior consulting bid manager.
+Act as a senior consulting bid director and transformation advisor.
 
-            Review the following RFP:
+Review the following RFP / RFQ document and provide a solution-oriented response for CXBERRIES.
 
-            {content[:12000]}
+RFP/RFQ Content:
+{content[:15000]}
 
-            Provide:
+Create a structured response with:
 
-            1. Executive Summary
-            2. Scope of Work
-            3. Mandatory Requirements
-            4. Key Risks / Red Flags
-            5. Clarification Questions
-            6. CXBerries Strength Fitment
-            7. Recommended Bid Strategy
-            8. Estimated Complexity (Low/Medium/High)
-            """
+1. Executive Summary
+2. Client Business Objectives
+3. Scope of Work
+4. Mandatory Requirements
+5. Key Risks / Red Flags
+6. Clarification Questions
+7. CXBerries Strength Fitment
+8. Recommended Bid Strategy
+9. Estimated Complexity (Low / Medium / High)
 
-            with st.spinner("Evaluating RFP..."):
+10. Proposed Solution Approach
+   - Current State Assessment
+   - Future State Design
+   - Transition Plan
+   - Governance Model
+   - KPI Framework
 
-                result = ask_ai(prompt)
+11. Suggested Delivery Operating Model
+   (Onsite / Offshore / Hybrid)
 
-            st.subheader("📌 RFP Evaluation Output")
+12. Recommended Team Structure
+   (Roles and responsibilities table)
 
-            st.write(result)
+13. Indicative Implementation Phases
+   (30-60-90 day roadmap)
+
+14. Commercial Considerations
+   - Effort drivers
+   - Cost levers
+   - Assumptions
+
+15. Transformation Opportunities
+   - Automation
+   - AI use cases
+   - Process improvement
+
+16. Risks Mitigation Plan
+   (Risk | Mitigation table)
+
+17. Win Themes for Proposal
+   (Where we standout)
+
+18. Suggested Executive Summary for Proposal Submission
+
+19. Create tables wherever useful.
+
+20. Create simple text diagrams wherever useful such as:
+
+Current State --> Transition --> Future State
+
+21. Keep tone professional, consulting-grade, concise and actionable.
+"""
