@@ -2,6 +2,8 @@ import streamlit as st
 from openai import OpenAI
 import pandas as pd
 import matplotlib.pyplot as plt
+from pypdf import PdfReader
+import docx
 
 # -----------------------
 # PAGE
@@ -36,8 +38,7 @@ def ask_ai(prompt):
 # -----------------------
 menu = st.sidebar.selectbox(
     "Select Module",
-    ["Proposal Generator", "Assessment Engine", "Data Insights"]
-)
+   ["Proposal Generator", "Assessment Engine", "RFP Insights Engine"]
 
 # ==========================================
 # PROPOSAL GENERATOR
@@ -129,33 +130,92 @@ elif menu == "Assessment Engine":
 # ==========================================
 # DATA INSIGHTS
 # ==========================================
-elif menu == "Data Insights":
+elif menu == "RFP Insights Engine":
 
-    st.header("📈 Data Insights")
+    st.header("📑 RFP Insights Engine")
 
-    file = st.file_uploader("Upload CSV", type=["csv"])
+    uploaded_file = st.file_uploader(
+        "Upload RFP File",
+        type=["pdf", "docx", "txt"]
+    )
 
-    if file:
-        df = pd.read_csv(file)
-        st.dataframe(df)
+    # ---------------------------
+    # PDF Reader
+    # ---------------------------
+    def read_pdf(file):
+        text = ""
+        reader = PdfReader(file)
 
-        if st.button("Generate Insights"):
+        for page in reader.pages:
+            extracted = page.extract_text()
+            if extracted:
+                text += extracted + "\n"
+
+        return text
+
+    # ---------------------------
+    # DOCX Reader
+    # ---------------------------
+    def read_docx(file):
+        doc = docx.Document(file)
+
+        text = "\n".join(
+            [para.text for para in doc.paragraphs]
+        )
+
+        return text
+
+    # ---------------------------
+    # MAIN LOGIC
+    # ---------------------------
+    if uploaded_file:
+
+        file_name = uploaded_file.name.lower()
+
+        if file_name.endswith(".pdf"):
+            content = read_pdf(uploaded_file)
+
+        elif file_name.endswith(".docx"):
+            content = read_docx(uploaded_file)
+
+        else:
+            content = uploaded_file.read().decode("utf-8")
+
+        st.success("✅ File uploaded and read successfully")
+
+        st.subheader("📄 Preview Content")
+
+        st.text_area(
+            "Extracted Text",
+            content[:3000],
+            height=250
+        )
+
+        if st.button("Evaluate RFP"):
 
             prompt = f"""
-            Analyze this dataset.
+            Act as a senior consulting bid manager.
 
-            Columns: {list(df.columns)}
-            Rows: {len(df)}
+            Review the following RFP:
 
-            Sample Data:
-            {df.head(10).to_string()}
+            {content[:12000]}
 
-            Give:
-            1. Trends
-            2. Risks
-            3. Improvement Opportunities
-            4. Executive Summary
+            Provide:
+
+            1. Executive Summary
+            2. Scope of Work
+            3. Mandatory Requirements
+            4. Key Risks / Red Flags
+            5. Clarification Questions
+            6. CXBerries Strength Fitment
+            7. Recommended Bid Strategy
+            8. Estimated Complexity (Low/Medium/High)
             """
 
-            result = ask_ai(prompt)
+            with st.spinner("Evaluating RFP..."):
+
+                result = ask_ai(prompt)
+
+            st.subheader("📌 RFP Evaluation Output")
+
             st.write(result)
