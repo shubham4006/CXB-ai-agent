@@ -17,7 +17,7 @@ st.subheader("Reduce proposal, assessment & analysis effort by 50–70%")
 # ------------------------
 # GEMINI API
 # ------------------------
-api_key = st.secrets["AIzaSyCTk13nT5j5P3GDO5wmBYnbZk7DEJjF6tI"]
+api_key = st.secrets["GEMINI_API_KEY"]
 
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-1.5-flash")
