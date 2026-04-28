@@ -13,78 +13,18 @@ import json, re
 st.set_page_config(page_title="CXBerries AI Engine", layout="wide")
 
 # -----------------------------
-# BEAUTIFIED UI
+# UI
 # -----------------------------
 st.markdown("""
 <style>
-
-/* Page background */
-[data-testid="stAppViewContainer"] {
-    background: linear-gradient(to right, #f4f7fb, #eef3f9);
-}
-
-/* Main container */
-.block-container {
-    padding-top: 2rem;
-}
-
-/* Title */
-.main-title {
-    font-size: 36px;
-    font-weight: 700;
-    color: #1f4e79;
-    text-align: center;
-}
-
-/* Subtitle */
-.sub-title {
-    text-align: center;
-    color: #6c757d;
-    margin-bottom: 25px;
-}
-
-/* Card */
-.card {
-    background: white;
-    padding: 20px;
-    border-radius: 14px;
-    box-shadow: 0px 6px 18px rgba(0,0,0,0.08);
-    margin-bottom: 20px;
-}
-
-/* Highlight box */
-.highlight {
-    background: #e8f2ff;
-    padding: 14px;
-    border-left: 6px solid #1f77b4;
-    border-radius: 8px;
-    margin-bottom: 15px;
-}
-
-/* Buttons */
-.stButton>button {
-    background: #1f77b4;
-    color: white;
-    border-radius: 8px;
-    padding: 6px 16px;
-}
-
-/* Sidebar */
-section[data-testid="stSidebar"] {
-    background-color: #f1f4f9;
-}
-
-/* Section headings */
-h3 {
-    color: #1f4e79;
-}
-
+.main-title {font-size:34px;font-weight:700;color:#1f4e79;text-align:center;}
+.sub-title {text-align:center;color:#6c757d;margin-bottom:20px;}
+.card {background:white;padding:18px;border-radius:12px;
+box-shadow:0px 4px 10px rgba(0,0,0,0.08);margin-bottom:15px;}
+.highlight {background:#f1f7ff;padding:12px;border-left:5px solid #1f77b4;}
 </style>
 """, unsafe_allow_html=True)
 
-# -----------------------------
-# HEADER
-# -----------------------------
 st.markdown('<div class="main-title">🚀 CXBerries AI Consulting Engine</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">RFP Intelligence • Opportunity • Assessment • Solution</div>', unsafe_allow_html=True)
 
@@ -158,10 +98,8 @@ def radar(d):
     ang=np.linspace(0,2*np.pi,len(labels),endpoint=False).tolist()+[0]
 
     fig,ax=plt.subplots(subplot_kw=dict(polar=True))
-    ax.plot(ang,vals)
-    ax.fill(ang,vals,alpha=0.3)
-    ax.set_xticks(ang[:-1])
-    ax.set_xticklabels(labels)
+    ax.plot(ang,vals); ax.fill(ang,vals,alpha=0.3)
+    ax.set_xticks(ang[:-1]); ax.set_xticklabels(labels)
     return fig
 
 def matrix(d):
@@ -213,10 +151,20 @@ if menu == "RFP Intelligence":
         Based ONLY on:
         {refined}
 
-        Provide bullet summary:
-        - Executive Summary
-        - Key Insights
-        - Key Risks
+        Provide in bullets:
+
+        ### Executive Summary
+        - ...
+
+        ### Key Insights
+        - ...
+
+        ### Key Risks
+        - ...
+
+        Rules:
+        - Only bullet points
+        - No paragraphs
         """)
 
         st.markdown("### 📌 Summary")
@@ -230,19 +178,127 @@ if menu == "RFP Intelligence":
 
         st.markdown('<div class="highlight">📍 CXBerries Delivery Perspective</div>', unsafe_allow_html=True)
 
-        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("📊 Multi-Dimensional View")
         st.pyplot(radar(d))
+
+        st.subheader("📍 Opportunity Positioning")
         st.pyplot(matrix(d))
-        st.markdown('</div>', unsafe_allow_html=True)
 
         explain = ask_ai(f"""
         Based on:
         {st.session_state['text']}
 
-        Explain charts in bullet points.
+        Scores:
+        Risk {d['risk_score']}
+        Complexity {d['complexity_score']}
+        Effort {d['effort_score']}
+        Value {d['value_score']}
+
+        Provide in bullets:
+
+        ### Chart Insights
+        - ...
+
+        ### Interpretation
+        - ...
+
+        ### Recommendation
+        - Go / Conditional / No
+        - Reason
+
+        Rules:
+        - Only bullets
+        - No paragraphs
         """)
 
-        st.markdown('<div class="card">', unsafe_allow_html=True)
         st.markdown("### 🧠 Interpretation")
         st.markdown(explain)
-        st.markdown('</div>', unsafe_allow_html=True)
+
+# =========================================================
+# OPPORTUNITY
+# =========================================================
+elif menu == "Opportunity":
+
+    if "data" not in st.session_state:
+        st.warning("Upload RFP first")
+    else:
+        t = st.session_state["text"]
+
+        st.markdown(ask_ai(f"""
+        Based on:
+        {t}
+
+        Provide:
+
+        ### Core Opportunity
+        - ...
+
+        ### Cross-sell Opportunities
+        - ...
+
+        ### CXB Advantage
+        - ...
+
+        Rules:
+        - Only bullets
+        """))
+
+# =========================================================
+# ASSESSMENT
+# =========================================================
+elif menu == "Assessment":
+
+    if "data" not in st.session_state:
+        st.warning("Upload RFP first")
+    else:
+        t = st.session_state["text"]
+
+        st.markdown(ask_ai(f"""
+        Based on:
+        {t}
+
+        Provide:
+
+        ### Current Maturity
+        - ...
+
+        ### Key Gaps
+        - ...
+
+        ### Roadmap
+        - 0–30 days:
+        - 30–60 days:
+        - 60–90 days:
+
+        Rules:
+        - Only bullets
+        """))
+
+# =========================================================
+# SOLUTION
+# =========================================================
+elif menu == "Solution":
+
+    if "data" not in st.session_state:
+        st.warning("Upload RFP first")
+    else:
+        t = st.session_state["text"]
+
+        st.markdown(ask_ai(f"""
+        Based on:
+        {t}
+
+        Provide:
+
+        ### Approach
+        - ...
+
+        ### Delivery Model
+        - ...
+
+        ### Value
+        - ...
+
+        Rules:
+        - Only bullets
+        """))
