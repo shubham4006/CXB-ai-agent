@@ -10,7 +10,7 @@ import json, re
 # -----------------------------
 # CONFIG
 # -----------------------------
-st.set_page_config(page_title="CXBerries AI Consulting Engine", layout="wide")
+st.set_page_config(page_title="CXBERRIES AI Consulting Engine", layout="wide")
 
 # -----------------------------
 # UI
