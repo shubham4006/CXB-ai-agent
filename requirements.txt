@@ -2,3 +2,6 @@ streamlit
 openai
 matplotlib
 python-pptx
+pypdf
+python-docx
+pandas
