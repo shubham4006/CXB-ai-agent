@@ -9,6 +9,7 @@ from pypdf import PdfReader
 import docx
 import pandas as pd
 import json
+import re
 
 # -----------------------------
 # CONFIG
@@ -51,15 +52,38 @@ def ask_ai(prompt):
         return f"Error: {str(e)}"
 
 # -----------------------------
+# SAFE JSON PARSER (FIX 🔥)
+# -----------------------------
+def safe_parse_json(raw):
+    try:
+        return json.loads(raw)
+    except:
+        match = re.search(r"\{.*\}", raw, re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group())
+            except:
+                pass
+
+        def extract_score(label):
+            match = re.search(rf"{label}.*?(\d)", raw, re.IGNORECASE)
+            return int(match.group(1)) if match else 3
+
+        return {
+            "industry": "Unknown",
+            "problem": "Not extracted",
+            "risk_score": extract_score("risk"),
+            "complexity_score": extract_score("complexity"),
+            "effort_score": extract_score("effort"),
+            "value_score": extract_score("value")
+        }
+
+# -----------------------------
 # FILE READERS
 # -----------------------------
 def read_pdf(file):
     reader = PdfReader(file)
-    text = ""
-    for p in reader.pages:
-        if p.extract_text():
-            text += p.extract_text()
-    return text
+    return "".join([p.extract_text() or "" for p in reader.pages])
 
 def read_docx(file):
     doc = docx.Document(file)
@@ -73,7 +97,7 @@ def read_excel(file):
 # RADAR CHART
 # -----------------------------
 def plot_radar(data):
-    labels = ["Risk", "Complexity", "Effort", "Value"]
+    labels = ["Risk","Complexity","Effort","Value"]
     values = [
         data["risk_score"],
         data["complexity_score"],
@@ -104,13 +128,11 @@ def plot_matrix(data):
     y = data["value_score"]
 
     ax.scatter(x, y, s=200)
-
     ax.set_xlim(0,5)
     ax.set_ylim(0,5)
 
     ax.set_xlabel("Risk")
     ax.set_ylabel("Value")
-    ax.set_title("Opportunity Positioning")
 
     ax.axhline(3)
     ax.axvline(3)
@@ -148,7 +170,7 @@ def create_ppt(text, fig):
 # -----------------------------
 menu = st.sidebar.selectbox(
     "Select Module",
-    ["RFP Intelligence", "Opportunity Qualification", "Assessment Engine", "Solution Shaping"]
+    ["RFP Intelligence","Opportunity Qualification","Assessment Engine","Solution Shaping"]
 )
 
 # =========================================================
@@ -177,9 +199,9 @@ if menu == "RFP Intelligence":
 
         if st.button("Evaluate RFP"):
 
-            # JSON extraction
             raw = ask_ai(f"""
-            Extract:
+            Return ONLY JSON:
+
             {{
               "industry": "",
               "problem": "",
@@ -193,14 +215,10 @@ if menu == "RFP Intelligence":
             {content[:4000]}
             """)
 
-            try:
-                data = json.loads(raw)
-            except:
-                st.error("Parsing error")
-                st.write(raw)
-                st.stop()
+            data = safe_parse_json(raw)
 
             st.session_state["rfp_data"] = data
+            st.session_state["rfp_content"] = content
 
             # Summary
             summary = ask_ai(f"""
@@ -208,9 +226,6 @@ if menu == "RFP Intelligence":
             - Executive Summary (3 bullets)
             - Key Insights (5 bullets)
             - Key Risks (3 bullets)
-
-            RFP:
-            {content[:4000]}
             """)
 
             st.subheader("📌 RFP Summary")
@@ -218,36 +233,31 @@ if menu == "RFP Intelligence":
 
             st.success(f"Industry: {data['industry']}")
 
-            # Radar Chart
+            # Charts
             st.subheader("📊 Multi-Dimensional View")
             st.pyplot(plot_radar(data))
 
-            # Matrix Chart
             st.subheader("📍 Opportunity Positioning")
             st.pyplot(plot_matrix(data))
 
-            # Score Explanation
+            # Explanation
             explanation = ask_ai(f"""
-            Explain:
+            Explain scores:
             Risk {data['risk_score']},
             Complexity {data['complexity_score']},
             Effort {data['effort_score']},
             Value {data['value_score']}
-
-            based on RFP.
             """)
 
             st.subheader("🧠 Score Justification")
             st.markdown(explanation)
 
-            # PPT
             ppt = create_ppt(summary + explanation, plot_radar(data))
             st.download_button("📥 Download PPT", ppt, "RFP_Output.pptx")
 
 # =========================================================
-# OTHER MODULES (same)
+# OTHER MODULES
 # =========================================================
-
 elif menu == "Opportunity Qualification":
 
     st.header("🎯 Opportunity Qualification")
@@ -255,15 +265,7 @@ elif menu == "Opportunity Qualification":
     if "rfp_data" not in st.session_state:
         st.warning("Run RFP first")
     else:
-        data = st.session_state["rfp_data"]
-
-        st.markdown(ask_ai(f"""
-        Evaluate:
-        Industry: {data['industry']}
-        Problem: {data['problem']}
-
-        Give Go/No-Go.
-        """))
+        st.markdown(ask_ai("Evaluate opportunity and give Go/No-Go"))
 
 elif menu == "Assessment Engine":
 
@@ -281,9 +283,4 @@ elif menu == "Solution Shaping":
     if "rfp_data" not in st.session_state:
         st.warning("Run RFP first")
     else:
-        data = st.session_state["rfp_data"]
-
-        st.markdown(ask_ai(f"""
-        Provide short solution bullets for:
-        {data['problem']}
-        """))
+        st.markdown(ask_ai("Provide short solution bullets"))
