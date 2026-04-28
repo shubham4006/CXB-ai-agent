@@ -198,71 +198,61 @@ elif menu == "RFP Insights Engine":
             content = uploaded_file.read().decode("utf-8")
 
         st.success("✅ File uploaded successfully")
-
         st.text_area("Preview Content", content[:3000], height=250)
 
-       if st.button("Evaluate RFP"):
+        # -----------------------------
+        # BUTTON BLOCK (CLEAN)
+        # -----------------------------
+        if st.button("Evaluate RFP"):
 
-    # -----------------------------
-    # PROMPT
-    # -----------------------------
-    prompt = f"""
-    Act as a senior consulting partner.
+            prompt = f"""
+            Act as a senior consulting partner.
 
-    Analyze the RFP:
+            Analyze the RFP:
 
-    {content[:5000]}
+            {content[:5000]}
 
-    Provide structured consulting insights including risks, solution, roadmap, team model, and strategy.
-    """
+            Provide structured consulting insights including risks, solution, roadmap, team model, and strategy.
+            """
 
-    # -----------------------------
-    # AI OUTPUT
-    # -----------------------------
-    with st.spinner("Evaluating RFP..."):
-        result = ask_ai(prompt)
+            with st.spinner("Evaluating RFP..."):
+                result = ask_ai(prompt)
 
-    st.subheader("📌 RFP Evaluation Output")
-    st.markdown(result)
+            st.subheader("📌 RFP Evaluation Output")
+            st.markdown(result)
 
-    st.markdown("---")
+            st.markdown("---")
 
-    # -----------------------------
-    # CHART
-    # -----------------------------
-    st.subheader("📊 Risk & Complexity Visualization")
+            # 📊 Chart
+            st.subheader("📊 Risk & Complexity Visualization")
 
-    labels = ["Risk", "Complexity", "Effort", "Impact"]
-    values = [3, 4, 4, 5]
+            labels = ["Risk", "Complexity", "Effort", "Impact"]
+            values = [3, 4, 4, 5]
 
-    fig, ax = plt.subplots()
-    ax.bar(labels, values)
-    st.pyplot(fig)
+            fig, ax = plt.subplots()
+            ax.bar(labels, values)
+            st.pyplot(fig)
 
-    st.markdown("---")
+            st.markdown("---")
 
-    # -----------------------------
-    # HEAT INDICATOR
-    # -----------------------------
-    st.subheader("📈 Engagement Heat Indicator")
+            # 📈 Heat Indicator
+            st.subheader("📈 Engagement Heat Indicator")
 
-    score = sum(values) / len(values)
+            score = sum(values) / len(values)
 
-    if score >= 4:
-        st.success("High Complexity Engagement")
-    elif score >= 3:
-        st.warning("Moderate Complexity Engagement")
-    else:
-        st.info("Low Complexity Engagement")
+            if score >= 4:
+                st.success("High Complexity Engagement")
+            elif score >= 3:
+                st.warning("Moderate Complexity Engagement")
+            else:
+                st.info("Low Complexity Engagement")
 
-    st.markdown("---")
+            st.markdown("---")
 
-    # -----------------------------
-    # DIAGRAM
-    # -----------------------------
-    st.subheader("🔄 Transformation Journey")
+            # 🔄 Diagram
+            st.subheader("🔄 Transformation Journey")
 
-    st.code("""
+            st.code("""
 Current State
     ↓
 Assessment & Discovery
@@ -274,21 +264,18 @@ Implementation
 Steady State Optimization
 """)
 
-    st.markdown("---")
+            st.markdown("---")
 
-    # -----------------------------
-    # PPT GENERATION
-    # -----------------------------
-    ppt_file = create_ppt(result, fig)
+            # 📥 PPT Download
+            ppt_file = create_ppt(result, fig)
 
-    with open(ppt_file, "rb") as f:
-        st.download_button(
-            label="📥 Download PPT Report",
-            data=f,
-            file_name="RFP_Evaluation.pptx",
-            mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
-        )
-
+            with open(ppt_file, "rb") as f:
+                st.download_button(
+                    label="📥 Download PPT Report",
+                    data=f,
+                    file_name="RFP_Evaluation.pptx",
+                    mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                )
             result = ask_ai(prompt)
 
             st.subheader("📌 RFP Evaluation Output")
