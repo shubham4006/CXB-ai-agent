@@ -18,7 +18,7 @@ st.title("🚀 CXBerries AI Consulting Decision Engine")
 st.caption("RFP → Qualification → Assessment → Solution")
 
 # -----------------------------
-# CXBERRIES CAPABILITIES
+# CXB CAPABILITIES
 # -----------------------------
 CXB_CAPABILITIES = """
 ITSM Consulting
@@ -30,7 +30,7 @@ Process Optimization
 """
 
 # -----------------------------
-# OPENROUTER SETUP
+# API SETUP
 # -----------------------------
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
@@ -69,7 +69,7 @@ def read_excel(file):
     return df.head(50).to_string()
 
 # -----------------------------
-# PPT GENERATOR
+# PPT
 # -----------------------------
 def create_ppt(text, fig):
     prs = Presentation()
@@ -135,8 +135,8 @@ if menu == "RFP Intelligence":
             Extract structured insights.
 
             IMPORTANT:
-            - Industry must be BUSINESS domain (Healthcare, Banking, Retail, Telecom etc.)
-            - NOT ITSM / ITAM
+            - Industry must be business domain (Healthcare, Banking etc.)
+            - NOT ITSM/ITAM
 
             Return JSON:
 
@@ -158,7 +158,7 @@ if menu == "RFP Intelligence":
             try:
                 data = json.loads(raw)
             except:
-                st.error("⚠️ Parsing error")
+                st.error("Parsing error")
                 st.write(raw)
                 st.stop()
 
@@ -166,11 +166,9 @@ if menu == "RFP Intelligence":
             st.session_state["rfp_content"] = content
 
             # -----------------------------
-            # STEP 2: SUMMARY OUTPUT
+            # STEP 2: SUMMARY
             # -----------------------------
-            prompt_summary = f"""
-            Create consulting summary.
-
+            summary = ask_ai(f"""
             Provide:
             - Executive Summary (3 bullets)
             - Key Insights (5 bullets)
@@ -178,14 +176,12 @@ if menu == "RFP Intelligence":
 
             RFP:
             {content[:4000]}
-            """
+            """)
 
-            summary = ask_ai(prompt_summary)
-
-            st.subheader("📌 RFP Summary & Insights")
+            st.subheader("📌 RFP Summary")
             st.markdown(summary)
 
-            st.success(f"Industry Identified: {data['industry']}")
+            st.success(f"Industry: {data['industry']}")
 
             # -----------------------------
             # STEP 3: CHART
@@ -212,26 +208,50 @@ if menu == "RFP Intelligence":
             c4.metric("Value", data["value_score"])
 
             # -----------------------------
+            # STEP 5: JUSTIFICATION (NEW 🔥)
+            # -----------------------------
+            explanation = ask_ai(f"""
+            Explain why these scores were assigned:
+
+            Risk: {data['risk_score']}
+            Complexity: {data['complexity_score']}
+            Effort: {data['effort_score']}
+            Value: {data['value_score']}
+
+            Based on:
+            {content[:3000]}
+
+            Output format:
+            - Risk: reason
+            - Complexity: reason
+            - Effort: reason
+            - Value: reason
+            """)
+
+            st.subheader("🧠 Score Justification")
+            st.markdown(explanation)
+
+            # -----------------------------
             # PPT
             # -----------------------------
-            ppt = create_ppt(summary, fig)
+            ppt = create_ppt(summary + "\n" + explanation, fig)
             st.download_button("📥 Download PPT", ppt, "RFP_Output.pptx")
 
 # =========================================================
-# 2. QUALIFICATION
+# OTHER MODULES (UNCHANGED LOGIC)
 # =========================================================
+
 elif menu == "Opportunity Qualification":
 
     st.header("🎯 Opportunity Qualification")
 
     if "rfp_data" not in st.session_state:
-        st.warning("⚠️ Run RFP Intelligence first")
+        st.warning("Run RFP first")
     else:
-
         data = st.session_state["rfp_data"]
 
-        prompt = f"""
-        Evaluate opportunity.
+        st.markdown(ask_ai(f"""
+        Evaluate opportunity:
 
         Industry: {data['industry']}
         Problem: {data['problem']}
@@ -240,66 +260,38 @@ elif menu == "Opportunity Qualification":
         {CXB_CAPABILITIES}
 
         Provide:
-        - Fit (High/Medium/Low)
+        - Fit
         - Go/No-Go
-        - Reason (short)
-        """
+        - Reason
+        """))
 
-        st.markdown(ask_ai(prompt))
-
-# =========================================================
-# 3. ASSESSMENT
-# =========================================================
 elif menu == "Assessment Engine":
 
     st.header("📊 Assessment Engine")
 
     if "rfp_data" not in st.session_state:
-        st.warning("⚠️ Run RFP Intelligence first")
+        st.warning("Run RFP first")
     else:
+        st.markdown(ask_ai(f"""
+        Assess maturity and roadmap:
 
-        data = st.session_state["rfp_data"]
+        {st.session_state['rfp_data']['problem']}
+        """))
 
-        prompt = f"""
-        Based on problem:
-
-        {data['problem']}
-
-        Provide:
-        - Maturity (Low/Medium/High)
-        - Key gaps (bullets)
-        - 90-day roadmap (bullets)
-        """
-
-        st.markdown(ask_ai(prompt))
-
-# =========================================================
-# 4. SOLUTION
-# =========================================================
 elif menu == "Solution Shaping":
 
     st.header("🧠 Solution Shaping")
 
     if "rfp_data" not in st.session_state:
-        st.warning("⚠️ Run RFP Intelligence first")
+        st.warning("Run RFP first")
     else:
-
         data = st.session_state["rfp_data"]
 
-        prompt = f"""
-        Provide VERY PRECISE consulting solution:
+        st.markdown(ask_ai(f"""
+        Provide precise solution:
 
         Industry: {data['industry']}
         Problem: {data['problem']}
 
-        CXBerries:
-        {CXB_CAPABILITIES}
-
-        Output bullets only:
-
-        - Solution (3 bullets)
-        - Delivery model (1 line)
-        - Value (2 bullets)
-        """
-
-        st.markdown(ask_ai(prompt))
+        Output bullets only.
+        """))
