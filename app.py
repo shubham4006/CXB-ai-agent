@@ -1,9 +1,9 @@
 import streamlit as st
 from openai import OpenAI
 import matplotlib.pyplot as plt
+from io import BytesIO
 from pptx import Presentation
 from pptx.util import Inches
-from io import BytesIO
 from pypdf import PdfReader
 import docx
 import pandas as pd
@@ -20,24 +20,23 @@ st.caption("RFP → Qualification → Assessment → Solution")
 # CXBERRIES CAPABILITIES
 # -----------------------------
 CXB_CAPABILITIES = """
-CXBerries provides:
-- ITSM Consulting
-- ITAM Governance & Optimization
-- Service Desk Transformation
-- Automation & AI Ops
-- Experience Management
-- Process Consulting & Optimization
+ITSM Consulting
+ITAM Governance
+Service Desk Transformation
+Automation & AI Ops
+Experience Management
+Process Optimization
 """
 
 # -----------------------------
-# API SETUP
+# OPENROUTER SETUP (STABLE MODEL)
 # -----------------------------
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=st.secrets["OPENROUTER_API_KEY"]
 )
 
-MODEL = "meta-llama/llama-3-8b-instruct:free"
+MODEL = "openai/gpt-3.5-turbo"  # Stable for demo
 
 def ask_ai(prompt):
     try:
@@ -69,7 +68,7 @@ def read_excel(file):
     return df.head(50).to_string()
 
 # -----------------------------
-# PPT
+# PPT GENERATOR
 # -----------------------------
 def create_ppt(text, fig):
     prs = Presentation()
@@ -103,7 +102,7 @@ menu = st.sidebar.selectbox(
 )
 
 # =========================================================
-# RFP INTELLIGENCE
+# 1. RFP INTELLIGENCE
 # =========================================================
 if menu == "RFP Intelligence":
 
@@ -134,36 +133,49 @@ if menu == "RFP Intelligence":
             prompt = f"""
             Analyze this RFP and extract:
 
-            1. Industry
-            2. Client Problem Statement
-            3. Key Requirements
-            4. Risks
-            5. Opportunity Summary
+            - Industry
+            - Client Problem
+            - Key Requirements
+            - Risks
+            - Opportunity Summary
 
             RFP:
             {content[:4000]}
             """
 
-            result = ask_ai(prompt)
+            with st.spinner("Analyzing RFP..."):
+                result = ask_ai(prompt)
 
             st.session_state["rfp_content"] = content
             st.session_state["rfp_analysis"] = result
 
             st.markdown(result)
 
+            # simple chart
+            labels = ["Risk","Complexity","Effort","Impact"]
+            values = [3,4,4,5]
+
+            fig, ax = plt.subplots()
+            ax.bar(labels, values)
+            st.pyplot(fig)
+
+            ppt = create_ppt(result, fig)
+
+            st.download_button("📥 Download PPT", ppt, "RFP_Output.pptx")
+
 # =========================================================
-# QUALIFICATION
+# 2. QUALIFICATION
 # =========================================================
 elif menu == "Opportunity Qualification":
 
     st.header("🎯 Opportunity Qualification")
 
     if "rfp_content" not in st.session_state:
-        st.warning("⚠️ Upload and evaluate RFP first")
+        st.warning("⚠️ Run RFP Intelligence first")
     else:
 
         prompt = f"""
-        Based on this RFP and CXBerries capabilities:
+        Based on RFP and CXBerries capabilities:
 
         Capabilities:
         {CXB_CAPABILITIES}
@@ -171,51 +183,50 @@ elif menu == "Opportunity Qualification":
         RFP:
         {st.session_state["rfp_content"][:3000]}
 
-        Evaluate:
+        Provide:
         - Strategic Fit
         - Capability Match
         - Risk Level
-        - Go / No-Go decision
+        - Go / No-Go Decision
         """
 
-        result = ask_ai(prompt)
-        st.markdown(result)
+        st.markdown(ask_ai(prompt))
 
 # =========================================================
-# ASSESSMENT ENGINE (DYNAMIC)
+# 3. ASSESSMENT ENGINE (DYNAMIC)
 # =========================================================
 elif menu == "Assessment Engine":
 
     st.header("📊 Assessment Engine")
 
     if "rfp_content" not in st.session_state:
-        st.warning("⚠️ Upload RFP first")
+        st.warning("⚠️ Run RFP Intelligence first")
     else:
 
         prompt = f"""
-        Based on this RFP:
+        Based on RFP:
 
         {st.session_state["rfp_content"][:3000]}
 
         Provide:
-        1. Maturity level (1-5 scale for Process, Tech, Governance, Data)
-        2. Gap analysis
-        3. Risk areas
-        4. Transformation roadmap
+
+        - Maturity scoring (Process, Tech, Governance, Data)
+        - Gap analysis
+        - Risks
+        - 90-day roadmap
         """
 
-        result = ask_ai(prompt)
-        st.markdown(result)
+        st.markdown(ask_ai(prompt))
 
 # =========================================================
-# SOLUTION SHAPING (AUTO)
+# 4. SOLUTION SHAPING
 # =========================================================
 elif menu == "Solution Shaping":
 
     st.header("🧠 Solution Shaping")
 
     if "rfp_content" not in st.session_state:
-        st.warning("⚠️ Upload RFP first")
+        st.warning("⚠️ Run RFP Intelligence first")
     else:
 
         prompt = f"""
@@ -227,16 +238,15 @@ elif menu == "Solution Shaping":
 
         {CXB_CAPABILITIES}
 
-        Generate a SHORT consulting solution:
+        Provide SHORT solution:
 
         - Industry
         - Problem
         - Solution (bullet points)
         - Delivery Model
-        - Key Value
+        - Value
 
-        Keep it crisp and executive-ready.
+        Keep concise and executive-ready.
         """
 
-        result = ask_ai(prompt)
-        st.markdown(result)
+        st.markdown(ask_ai(prompt))
