@@ -177,10 +177,8 @@ elif menu == "RFP Insights Engine":
             content[:3000],
             height=250
         )
-
-        if st.button("Evaluate RFP"):
-
-    prompt = f"""
+if st.button("Evaluate RFP"):
+    prompt = f"""   
     Act as a senior consulting partner.
 
     Analyze the RFP:
