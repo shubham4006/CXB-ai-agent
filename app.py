@@ -87,7 +87,10 @@ if "OPENAI_API_KEY" not in st.secrets:
 api_key = st.secrets["OPENAI_API_KEY"]
 st.success("✅ API Key loaded successfully")
 
-client = OpenAI(api_key=api_key)
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=st.secrets["OPENROUTER_API_KEY"]
+)
 
 def ask_ai(prompt):
     try:
