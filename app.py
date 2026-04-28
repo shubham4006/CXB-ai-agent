@@ -6,6 +6,7 @@ from pypdf import PdfReader
 import docx
 from pptx import Presentation
 from pptx.util import Inches
+from io import BytesIO
 
 # -----------------------
 # PAGE
@@ -34,6 +35,9 @@ def ask_ai(prompt):
     except Exception as e:
         return f"Error: {str(e)}"
 def create_ppt(result_text, chart_fig):
+    from pptx import Presentation
+    from pptx.util import Inches
+
     prs = Presentation()
 
     # Slide 1: Title
@@ -42,27 +46,28 @@ def create_ppt(result_text, chart_fig):
     slide.shapes.title.text = "RFP Evaluation Summary"
     slide.placeholders[1].text = "AI Consulting Accelerator Output"
 
-    # Slide 2: AI Output (summary)
+    # Slide 2: AI Output
     slide_layout = prs.slide_layouts[1]
     slide = prs.slides.add_slide(slide_layout)
     slide.shapes.title.text = "Key Insights"
+    slide.placeholders[1].text = result_text[:1000]
 
-    content = result_text[:1000]  # avoid overflow
-    slide.placeholders[1].text = content
-
-    # Slide 3: Chart
-    chart_path = "/mnt/data/chart.png"
-    chart_fig.savefig(chart_path)
+    # Slide 3: Chart (IN MEMORY FIX)
+    img_stream = BytesIO()
+    chart_fig.savefig(img_stream, format="png")
+    img_stream.seek(0)
 
     slide_layout = prs.slide_layouts[5]
     slide = prs.slides.add_slide(slide_layout)
     slide.shapes.title.text = "Risk & Complexity Analysis"
-    slide.shapes.add_picture(chart_path, Inches(1), Inches(2), width=Inches(6))
+    slide.shapes.add_picture(img_stream, Inches(1), Inches(2), width=Inches(6))
 
-    ppt_path = "/mnt/data/rfp_output.pptx"
-    prs.save(ppt_path)
+    # Save PPT to memory
+    ppt_stream = BytesIO()
+    prs.save(ppt_stream)
+    ppt_stream.seek(0)
 
-    return ppt_path
+    return ppt_stream
 # -----------------------
 # MENU
 # -----------------------
@@ -269,13 +274,12 @@ Steady State Optimization
             # 📥 PPT Download
             ppt_file = create_ppt(result, fig)
 
-            with open(ppt_file, "rb") as f:
-                st.download_button(
-                    label="📥 Download PPT Report",
-                    data=f,
-                    file_name="RFP_Evaluation.pptx",
-                    mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
-                )
+            st.download_button(
+    label="📥 Download PPT Report",
+    data=ppt_file,
+    file_name="RFP_Evaluation.pptx",
+    mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+)
             result = ask_ai(prompt)
 
             st.subheader("📌 RFP Evaluation Output")
