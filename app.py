@@ -3,6 +3,8 @@ from openai import OpenAI
 import matplotlib.pyplot as plt
 import numpy as np
 from io import BytesIO
+from pptx import Presentation
+from pptx.util import Inches
 from pypdf import PdfReader
 import docx
 import pandas as pd
@@ -14,35 +16,20 @@ import re
 # -----------------------------
 st.set_page_config(page_title="CXBerries AI Consulting Engine", layout="wide")
 
-# -----------------------------
-# UI STYLING
-# -----------------------------
-st.markdown("""
-<style>
-.main-title {font-size:34px;font-weight:700;color:#1f4e79;text-align:center;}
-.sub-title {text-align:center;color:#6c757d;margin-bottom:20px;}
-.card {background:white;padding:18px;border-radius:12px;
-box-shadow:0px 4px 10px rgba(0,0,0,0.08);margin-bottom:15px;}
-.highlight {background:#f1f7ff;padding:12px;border-left:5px solid #1f77b4;border-radius:6px;}
-.stButton>button {background:#1f77b4;color:white;border-radius:8px;}
-section[data-testid="stSidebar"] {background:#f8f9fa;}
-</style>
-""", unsafe_allow_html=True)
+st.title("🚀 CXBerries AI Consulting Decision Engine")
+st.caption("RFP → Qualification → Assessment → Solution")
 
 # -----------------------------
-# HEADER
+# CXB CAPABILITIES
 # -----------------------------
-st.markdown('<div class="main-title">🚀 CXBerries AI Consulting Engine</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">AI-powered RFP Intelligence & Decision Support</div>', unsafe_allow_html=True)
-
-# -----------------------------
-# METRICS
-# -----------------------------
-c1, c2, c3, c4 = st.columns(4)
-c1.metric("Modules", "4")
-c2.metric("AI Powered", "Yes")
-c3.metric("Speed", "60% Faster")
-c4.metric("Focus", "RFP Intelligence")
+CXB_CAPABILITIES = """
+ITSM Consulting
+ITAM Governance
+Service Desk Transformation
+Automation & AI Ops
+Experience Management
+Process Optimization
+"""
 
 # -----------------------------
 # API SETUP
@@ -63,6 +50,18 @@ def ask_ai(prompt):
         return res.choices[0].message.content
     except Exception as e:
         return f"Error: {str(e)}"
+
+# -----------------------------
+# CHUNKING (IMPORTANT FIX)
+# -----------------------------
+def chunk_text(text, chunk_size=2000):
+    return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
+
+def summarize_chunks(chunks):
+    summaries = []
+    for chunk in chunks[:5]:  # limit for performance
+        summaries.append(ask_ai(f"Summarize this:\n{chunk}"))
+    return "\n".join(summaries)
 
 # -----------------------------
 # SAFE PARSER
@@ -107,98 +106,108 @@ def read_excel(file):
     return df.head(50).to_string()
 
 # -----------------------------
-# CHUNKING
-# -----------------------------
-def chunk_text(text, size=2000):
-    return [text[i:i+size] for i in range(0, len(text), size)]
-
-def summarize_chunks(chunks):
-    return "\n".join([ask_ai(f"Summarize:\n{c}") for c in chunks[:5]])
-
-# -----------------------------
 # CHARTS
 # -----------------------------
 def plot_radar(data):
     labels = ["Risk","Complexity","Effort","Value"]
-    values = [data["risk_score"],data["complexity_score"],data["effort_score"],data["value_score"]]
+    values = [
+        data["risk_score"],
+        data["complexity_score"],
+        data["effort_score"],
+        data["value_score"]
+    ]
+
     values += values[:1]
-    angles = np.linspace(0,2*np.pi,len(labels),endpoint=False).tolist()
+    angles = np.linspace(0, 2*np.pi, len(labels), endpoint=False).tolist()
     angles += angles[:1]
 
     fig, ax = plt.subplots(subplot_kw=dict(polar=True))
     ax.plot(angles, values)
     ax.fill(angles, values, alpha=0.3)
+
     ax.set_xticks(angles[:-1])
     ax.set_xticklabels(labels)
+
     return fig
 
 def plot_matrix(data):
     fig, ax = plt.subplots()
+
     ax.scatter(data["risk_score"], data["value_score"], s=200)
+
     ax.set_xlim(0,5)
     ax.set_ylim(0,5)
-    ax.set_xlabel("Risk")
-    ax.set_ylabel("Value")
+
+    ax.set_xlabel("Risk (CXB Delivery Risk)")
+    ax.set_ylabel("Value (Business Impact)")
+
     ax.axhline(3)
     ax.axvline(3)
+
     return fig
 
 # -----------------------------
 # SIDEBAR
 # -----------------------------
-menu = st.sidebar.selectbox("Navigation",
-["RFP Intelligence","Opportunity Qualification","Assessment","Solution"])
+menu = st.sidebar.selectbox(
+    "Select Module",
+    ["RFP Intelligence","Opportunity Qualification","Assessment Engine","Solution Shaping"]
+)
 
 # =========================================================
 # RFP INTELLIGENCE
 # =========================================================
 if menu == "RFP Intelligence":
 
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.header("📑 Upload RFP")
+    st.header("📑 RFP Intelligence Engine")
 
-    file = st.file_uploader("Upload file", type=["txt","pdf","docx","xlsx","csv"])
+    file = st.file_uploader("Upload RFP", type=["txt","pdf","docx","xlsx","csv"])
 
     if file:
 
-        if file.name.endswith(".pdf"):
+        name = file.name.lower()
+
+        if name.endswith(".pdf"):
             content = read_pdf(file)
-        elif file.name.endswith(".docx"):
+        elif name.endswith(".docx"):
             content = read_docx(file)
-        elif file.name.endswith(".xlsx") or file.name.endswith(".csv"):
+        elif name.endswith(".xlsx") or name.endswith(".csv"):
             content = read_excel(file)
         else:
             content = file.read().decode("utf-8")
 
-        st.success("📄 RFP processed successfully")
+        st.success("📄 Processing full RFP content")
 
         chunks = chunk_text(content)
-        refined = summarize_chunks(chunks)
+        refined_content = summarize_chunks(chunks)
 
         # JSON extraction
         raw = ask_ai(f"""
-        Based on this RFP:
-        {refined}
+        Based ONLY on this RFP summary:
+
+        {refined_content}
 
         Return JSON:
         {{
-        "industry":"",
-        "problem":"",
-        "risk_score":1-5,
-        "complexity_score":1-5,
-        "effort_score":1-5,
-        "value_score":1-5
+          "industry": "",
+          "problem": "",
+          "risk_score": 1-5,
+          "complexity_score": 1-5,
+          "effort_score": 1-5,
+          "value_score": 1-5
         }}
         """)
 
         data = safe_parse_json(raw)
+
         st.session_state["rfp_data"] = data
-        st.session_state["rfp_text"] = refined
+        st.session_state["rfp_content"] = refined_content
 
         # SUMMARY
         summary = ask_ai(f"""
-        Based ONLY on:
-        {refined}
+        Based ONLY on this RFP:
+
+        {refined_content}
 
         Provide:
         - Executive Summary (3 bullets)
@@ -206,70 +215,81 @@ if menu == "RFP Intelligence":
         - Key Risks (3 bullets)
         """)
 
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        # OUTPUT CARD
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown("### 📌 RFP Summary")
+        st.subheader("📌 RFP Summary")
         st.markdown(summary)
-        st.success(f"Industry: {data['industry']}")
-        st.markdown('</div>', unsafe_allow_html=True)
 
-        # CONTEXT BOX
-        st.markdown('<div class="highlight">📍 Scores reflect CXBerries delivery perspective</div>', unsafe_allow_html=True)
+        st.success(f"Industry: {data['industry']}")
+        st.info("📍 Scores from CXBerries delivery perspective")
 
         # CHARTS
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown("### 📊 Multi-Dimensional View")
+        st.subheader("📊 Multi-Dimensional View")
         st.pyplot(plot_radar(data))
 
-        st.markdown("### 📍 Opportunity Positioning")
+        st.markdown("Radar shows relative intensity across risk, complexity, effort, and value.")
+
+        st.subheader("📍 Opportunity Positioning")
         st.pyplot(plot_matrix(data))
-        st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown("Matrix shows risk vs value positioning for decision making.")
 
         # EXPLANATION
         explanation = ask_ai(f"""
-        Explain scores clearly:
+        Explain scores based on RFP:
 
-        Risk {data['risk_score']}
-        Complexity {data['complexity_score']}
-        Effort {data['effort_score']}
-        Value {data['value_score']}
+        {refined_content}
+
+        Risk: {data['risk_score']}
+        Complexity: {data['complexity_score']}
+        Effort: {data['effort_score']}
+        Value: {data['value_score']}
         """)
 
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown("### 🧠 Score Explanation")
+        st.subheader("🧠 Score Justification")
         st.markdown(explanation)
-        st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
 # OTHER MODULES
 # =========================================================
 elif menu == "Opportunity Qualification":
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.header("🎯 Qualification")
 
-    if "rfp_data" in st.session_state:
-        data = st.session_state["rfp_data"]
-        st.markdown(ask_ai(f"Evaluate opportunity for {data['industry']}"))
+    st.header("🎯 Opportunity Qualification")
+
+    if "rfp_data" not in st.session_state:
+        st.warning("Run RFP first")
     else:
-        st.warning("Upload RFP first")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-elif menu == "Assessment":
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.header("📊 Assessment")
-    st.markdown("AI-driven maturity and roadmap (placeholder)")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-elif menu == "Solution":
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.header("🧠 Solution")
-
-    if "rfp_data" in st.session_state:
         data = st.session_state["rfp_data"]
-        st.markdown(ask_ai(f"Provide short solution for {data['problem']}"))
-    else:
-        st.warning("Upload RFP first")
 
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown(ask_ai(f"""
+        Evaluate opportunity:
+
+        Industry: {data['industry']}
+        Problem: {data['problem']}
+
+        CXBerries:
+        {CXB_CAPABILITIES}
+        """))
+
+elif menu == "Assessment Engine":
+
+    st.header("📊 Assessment Engine")
+
+    if "rfp_data" not in st.session_state:
+        st.warning("Run RFP first")
+    else:
+        st.markdown(ask_ai("Provide maturity and roadmap"))
+
+elif menu == "Solution Shaping":
+
+    st.header("🧠 Solution Shaping")
+
+    if "rfp_data" not in st.session_state:
+        st.warning("Run RFP first")
+    else:
+        data = st.session_state["rfp_data"]
+
+        st.markdown(ask_ai(f"""
+        Provide precise solution bullets:
+
+        Industry: {data['industry']}
+        Problem: {data['problem']}
+        """))
