@@ -77,7 +77,13 @@ st.markdown("---")
 # -----------------------------
 # OPENAI
 # -----------------------------
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+api_key = st.secrets.get("OPENAI_API_KEY")
+
+if not api_key:
+    st.error("⚠️ OpenAI API Key not found. Please add it in Streamlit Secrets.")
+    st.stop()
+
+client = OpenAI(api_key=api_key)
 
 def ask_ai(prompt):
     try:
