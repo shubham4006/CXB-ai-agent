@@ -10,7 +10,7 @@ import json, re
 # -----------------------------
 # CONFIG
 # -----------------------------
-st.set_page_config(page_title="CXBerries AI Engine", layout="wide")
+st.set_page_config(page_title="CXBERRIES AI Engine", layout="wide")
 
 # -----------------------------
 # UI
@@ -25,7 +25,7 @@ box-shadow:0px 4px 10px rgba(0,0,0,0.08);margin-bottom:15px;}
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="main-title">🚀 CXBerries AI Consulting Engine</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title"> CXBERRIES AI Consulting Engine</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">RFP Intelligence • Opportunity • Assessment • Solution</div>', unsafe_allow_html=True)
 
 # -----------------------------
@@ -114,7 +114,7 @@ def matrix(d):
 # NAV
 # -----------------------------
 menu = st.sidebar.selectbox("Navigation",
-["RFP Intelligence","Opportunity","Assessment","Solution"])
+["RFP/RFQ Intelligence","Opportunity","Assessment","Solution"])
 
 # =========================================================
 # RFP INTELLIGENCE
@@ -122,7 +122,7 @@ menu = st.sidebar.selectbox("Navigation",
 if menu == "RFP Intelligence":
 
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    file = st.file_uploader("Upload RFP")
+    file = st.file_uploader("Upload RFP/RFQ")
 
     if file:
         text = read_file(file)
