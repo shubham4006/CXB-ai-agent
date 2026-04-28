@@ -201,59 +201,68 @@ elif menu == "RFP Insights Engine":
 
         st.text_area("Preview Content", content[:3000], height=250)
 
-        if st.button("Evaluate RFP/RFQ"):
+       if st.button("Evaluate RFP"):
 
-            prompt = f"""
-            Act as a senior consulting partner.
+    # -----------------------------
+    # PROMPT
+    # -----------------------------
+    prompt = f"""
+    Act as a senior consulting partner.
 
-            Analyze the RFP:
+    Analyze the RFP:
 
-            {content[:5000]}
+    {content[:5000]}
 
-            Provide structured consulting insights including risks, solution, roadmap, team model, and strategy.
-            """
+    Provide structured consulting insights including risks, solution, roadmap, team model, and strategy.
+    """
 
-            with st.spinner("Evaluating RFP..."):
-                result = ask_ai(prompt)
+    # -----------------------------
+    # AI OUTPUT
+    # -----------------------------
+    with st.spinner("Evaluating RFP..."):
+        result = ask_ai(prompt)
 
-            st.subheader("📌 RFP Evaluation Output")
-            st.markdown(result)
+    st.subheader("📌 RFP Evaluation Output")
+    st.markdown(result)
 
-            st.markdown("---")
+    st.markdown("---")
 
-# Create chart
-fig, ax = plt.subplots()
-ax.bar(labels, values)
-st.pyplot(fig)
+    # -----------------------------
+    # CHART
+    # -----------------------------
+    st.subheader("📊 Risk & Complexity Visualization")
 
-            # Generate PPT
-ppt_file = create_ppt(result, fig)
+    labels = ["Risk", "Complexity", "Effort", "Impact"]
+    values = [3, 4, 4, 5]
 
-# Download button
-with open(ppt_file, "rb") as f:
-    st.download_button(
-        label="📥 Download PPT Report",
-        data=f,
-        file_name="RFP/RFQ_Evaluation.pptx",
-        mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
-    )
+    fig, ax = plt.subplots()
+    ax.bar(labels, values)
+    st.pyplot(fig)
 
-            # 📈 Heat Indicator
-            st.subheader("📈 Engagement Heat Indicator")
+    st.markdown("---")
 
-            score = sum(values) / len(values)
+    # -----------------------------
+    # HEAT INDICATOR
+    # -----------------------------
+    st.subheader("📈 Engagement Heat Indicator")
 
-            if score >= 4:
-                st.success("High Complexity Engagement")
-            elif score >= 3:
-                st.warning("Moderate Complexity Engagement")
-            else:
-                st.info("Low Complexity Engagement")
+    score = sum(values) / len(values)
 
-            # 🔄 Diagram
-            st.subheader("🔄 Transformation Journey")
+    if score >= 4:
+        st.success("High Complexity Engagement")
+    elif score >= 3:
+        st.warning("Moderate Complexity Engagement")
+    else:
+        st.info("Low Complexity Engagement")
 
-            st.code("""
+    st.markdown("---")
+
+    # -----------------------------
+    # DIAGRAM
+    # -----------------------------
+    st.subheader("🔄 Transformation Journey")
+
+    st.code("""
 Current State
     ↓
 Assessment & Discovery
@@ -265,7 +274,20 @@ Implementation
 Steady State Optimization
 """)
 
-            st.markdown("---")
+    st.markdown("---")
+
+    # -----------------------------
+    # PPT GENERATION
+    # -----------------------------
+    ppt_file = create_ppt(result, fig)
+
+    with open(ppt_file, "rb") as f:
+        st.download_button(
+            label="📥 Download PPT Report",
+            data=f,
+            file_name="RFP_Evaluation.pptx",
+            mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        )
 
             result = ask_ai(prompt)
 
