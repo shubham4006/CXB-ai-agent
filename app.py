@@ -203,7 +203,7 @@ elif menu == "RFP Insights Engine":
         # -----------------------------
         # BUTTON BLOCK (CLEAN)
         # -----------------------------
-        if st.button("Evaluate RFP"):
+        if st.button("Evaluate RFP/RFQ"):
 
             prompt = f"""
             Act as a senior consulting partner.
