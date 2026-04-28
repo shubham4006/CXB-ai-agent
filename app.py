@@ -278,7 +278,6 @@ Steady State Optimization
     label="📥 Download PPT Report",
     data=ppt_file,
     file_name="RFP_Evaluation.pptx",
-    mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
 )
             result = ask_ai(prompt)
 
