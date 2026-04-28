@@ -32,7 +32,7 @@ Process Optimization
 """
 
 # -----------------------------
-# API SETUP
+# API
 # -----------------------------
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
@@ -52,7 +52,7 @@ def ask_ai(prompt):
         return f"Error: {str(e)}"
 
 # -----------------------------
-# SAFE JSON PARSER (FIX 🔥)
+# SAFE PARSER
 # -----------------------------
 def safe_parse_json(raw):
     try:
@@ -119,7 +119,7 @@ def plot_radar(data):
     return fig
 
 # -----------------------------
-# MATRIX CHART
+# MATRIX
 # -----------------------------
 def plot_matrix(data):
     fig, ax = plt.subplots()
@@ -128,11 +128,12 @@ def plot_matrix(data):
     y = data["value_score"]
 
     ax.scatter(x, y, s=200)
+
     ax.set_xlim(0,5)
     ax.set_ylim(0,5)
 
-    ax.set_xlabel("Risk")
-    ax.set_ylabel("Value")
+    ax.set_xlabel("Risk (Delivery Risk for CXBerries)")
+    ax.set_ylabel("Value (Business + Revenue Impact)")
 
     ax.axhline(3)
     ax.axvline(3)
@@ -200,8 +201,7 @@ if menu == "RFP Intelligence":
         if st.button("Evaluate RFP"):
 
             raw = ask_ai(f"""
-            Return ONLY JSON:
-
+            Return JSON:
             {{
               "industry": "",
               "problem": "",
@@ -210,17 +210,12 @@ if menu == "RFP Intelligence":
               "effort_score": 1-5,
               "value_score": 1-5
             }}
-
-            RFP:
-            {content[:4000]}
             """)
 
             data = safe_parse_json(raw)
-
             st.session_state["rfp_data"] = data
-            st.session_state["rfp_content"] = content
 
-            # Summary
+            # SUMMARY
             summary = ask_ai(f"""
             Provide:
             - Executive Summary (3 bullets)
@@ -233,20 +228,43 @@ if menu == "RFP Intelligence":
 
             st.success(f"Industry: {data['industry']}")
 
-            # Charts
+            st.info("📍 All scores are evaluated from CXBerries delivery perspective")
+
+            # RADAR
             st.subheader("📊 Multi-Dimensional View")
             st.pyplot(plot_radar(data))
 
+            st.markdown("""
+**How to read this chart:**
+- Risk → Delivery & operational risk for CXBerries  
+- Complexity → Technical + process complexity  
+- Effort → Implementation workload  
+- Value → Revenue + strategic value  
+
+Higher values indicate higher intensity.
+""")
+
+            # MATRIX
             st.subheader("📍 Opportunity Positioning")
             st.pyplot(plot_matrix(data))
 
-            # Explanation
+            st.markdown("""
+**Matrix Explanation:**
+- Top-right → High value, high risk (strategic deals)  
+- Bottom-right → High value, low risk (ideal deals)  
+- Left side → Lower value opportunities  
+""")
+
+            # SCORE EXPLANATION
             explanation = ask_ai(f"""
-            Explain scores:
-            Risk {data['risk_score']},
-            Complexity {data['complexity_score']},
-            Effort {data['effort_score']},
-            Value {data['value_score']}
+            Explain in simple terms:
+
+            Risk: {data['risk_score']}
+            Complexity: {data['complexity_score']}
+            Effort: {data['effort_score']}
+            Value: {data['value_score']}
+
+            based on CXBerries perspective.
             """)
 
             st.subheader("🧠 Score Justification")
@@ -254,33 +272,3 @@ if menu == "RFP Intelligence":
 
             ppt = create_ppt(summary + explanation, plot_radar(data))
             st.download_button("📥 Download PPT", ppt, "RFP_Output.pptx")
-
-# =========================================================
-# OTHER MODULES
-# =========================================================
-elif menu == "Opportunity Qualification":
-
-    st.header("🎯 Opportunity Qualification")
-
-    if "rfp_data" not in st.session_state:
-        st.warning("Run RFP first")
-    else:
-        st.markdown(ask_ai("Evaluate opportunity and give Go/No-Go"))
-
-elif menu == "Assessment Engine":
-
-    st.header("📊 Assessment Engine")
-
-    if "rfp_data" not in st.session_state:
-        st.warning("Run RFP first")
-    else:
-        st.markdown(ask_ai("Provide maturity + roadmap"))
-
-elif menu == "Solution Shaping":
-
-    st.header("🧠 Solution Shaping")
-
-    if "rfp_data" not in st.session_state:
-        st.warning("Run RFP first")
-    else:
-        st.markdown(ask_ai("Provide short solution bullets"))
