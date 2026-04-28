@@ -1,6 +1,7 @@
 import streamlit as st
 from openai import OpenAI
 import matplotlib.pyplot as plt
+import numpy as np
 from io import BytesIO
 from pptx import Presentation
 from pptx.util import Inches
@@ -69,6 +70,54 @@ def read_excel(file):
     return df.head(50).to_string()
 
 # -----------------------------
+# RADAR CHART
+# -----------------------------
+def plot_radar(data):
+    labels = ["Risk", "Complexity", "Effort", "Value"]
+    values = [
+        data["risk_score"],
+        data["complexity_score"],
+        data["effort_score"],
+        data["value_score"]
+    ]
+
+    values += values[:1]
+    angles = np.linspace(0, 2*np.pi, len(labels), endpoint=False).tolist()
+    angles += angles[:1]
+
+    fig, ax = plt.subplots(subplot_kw=dict(polar=True))
+    ax.plot(angles, values)
+    ax.fill(angles, values, alpha=0.3)
+
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(labels)
+
+    return fig
+
+# -----------------------------
+# MATRIX CHART
+# -----------------------------
+def plot_matrix(data):
+    fig, ax = plt.subplots()
+
+    x = data["risk_score"]
+    y = data["value_score"]
+
+    ax.scatter(x, y, s=200)
+
+    ax.set_xlim(0,5)
+    ax.set_ylim(0,5)
+
+    ax.set_xlabel("Risk")
+    ax.set_ylabel("Value")
+    ax.set_title("Opportunity Positioning")
+
+    ax.axhline(3)
+    ax.axvline(3)
+
+    return fig
+
+# -----------------------------
 # PPT
 # -----------------------------
 def create_ppt(text, fig):
@@ -86,7 +135,7 @@ def create_ppt(text, fig):
     img.seek(0)
 
     slide = prs.slides.add_slide(prs.slide_layouts[5])
-    slide.shapes.title.text = "Opportunity Snapshot"
+    slide.shapes.title.text = "Analysis"
     slide.shapes.add_picture(img, Inches(1), Inches(2), width=Inches(6))
 
     ppt = BytesIO()
@@ -103,7 +152,7 @@ menu = st.sidebar.selectbox(
 )
 
 # =========================================================
-# 1. RFP INTELLIGENCE
+# RFP INTELLIGENCE
 # =========================================================
 if menu == "RFP Intelligence":
 
@@ -128,18 +177,9 @@ if menu == "RFP Intelligence":
 
         if st.button("Evaluate RFP"):
 
-            # -----------------------------
-            # STEP 1: JSON EXTRACTION
-            # -----------------------------
-            prompt_json = f"""
-            Extract structured insights.
-
-            IMPORTANT:
-            - Industry must be business domain (Healthcare, Banking etc.)
-            - NOT ITSM/ITAM
-
-            Return JSON:
-
+            # JSON extraction
+            raw = ask_ai(f"""
+            Extract:
             {{
               "industry": "",
               "problem": "",
@@ -151,9 +191,7 @@ if menu == "RFP Intelligence":
 
             RFP:
             {content[:4000]}
-            """
-
-            raw = ask_ai(prompt_json)
+            """)
 
             try:
                 data = json.loads(raw)
@@ -163,11 +201,8 @@ if menu == "RFP Intelligence":
                 st.stop()
 
             st.session_state["rfp_data"] = data
-            st.session_state["rfp_content"] = content
 
-            # -----------------------------
-            # STEP 2: SUMMARY
-            # -----------------------------
+            # Summary
             summary = ask_ai(f"""
             Provide:
             - Executive Summary (3 bullets)
@@ -183,62 +218,34 @@ if menu == "RFP Intelligence":
 
             st.success(f"Industry: {data['industry']}")
 
-            # -----------------------------
-            # STEP 3: CHART
-            # -----------------------------
-            labels = ["Risk", "Complexity", "Effort", "Value"]
-            values = [
-                data["risk_score"],
-                data["complexity_score"],
-                data["effort_score"],
-                data["value_score"]
-            ]
+            # Radar Chart
+            st.subheader("📊 Multi-Dimensional View")
+            st.pyplot(plot_radar(data))
 
-            fig, ax = plt.subplots()
-            ax.bar(labels, values)
-            st.pyplot(fig)
+            # Matrix Chart
+            st.subheader("📍 Opportunity Positioning")
+            st.pyplot(plot_matrix(data))
 
-            # -----------------------------
-            # STEP 4: METRICS
-            # -----------------------------
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric("Risk", data["risk_score"])
-            c2.metric("Complexity", data["complexity_score"])
-            c3.metric("Effort", data["effort_score"])
-            c4.metric("Value", data["value_score"])
-
-            # -----------------------------
-            # STEP 5: JUSTIFICATION (NEW 🔥)
-            # -----------------------------
+            # Score Explanation
             explanation = ask_ai(f"""
-            Explain why these scores were assigned:
+            Explain:
+            Risk {data['risk_score']},
+            Complexity {data['complexity_score']},
+            Effort {data['effort_score']},
+            Value {data['value_score']}
 
-            Risk: {data['risk_score']}
-            Complexity: {data['complexity_score']}
-            Effort: {data['effort_score']}
-            Value: {data['value_score']}
-
-            Based on:
-            {content[:3000]}
-
-            Output format:
-            - Risk: reason
-            - Complexity: reason
-            - Effort: reason
-            - Value: reason
+            based on RFP.
             """)
 
             st.subheader("🧠 Score Justification")
             st.markdown(explanation)
 
-            # -----------------------------
             # PPT
-            # -----------------------------
-            ppt = create_ppt(summary + "\n" + explanation, fig)
+            ppt = create_ppt(summary + explanation, plot_radar(data))
             st.download_button("📥 Download PPT", ppt, "RFP_Output.pptx")
 
 # =========================================================
-# OTHER MODULES (UNCHANGED LOGIC)
+# OTHER MODULES (same)
 # =========================================================
 
 elif menu == "Opportunity Qualification":
@@ -251,18 +258,11 @@ elif menu == "Opportunity Qualification":
         data = st.session_state["rfp_data"]
 
         st.markdown(ask_ai(f"""
-        Evaluate opportunity:
-
+        Evaluate:
         Industry: {data['industry']}
         Problem: {data['problem']}
 
-        CXBerries:
-        {CXB_CAPABILITIES}
-
-        Provide:
-        - Fit
-        - Go/No-Go
-        - Reason
+        Give Go/No-Go.
         """))
 
 elif menu == "Assessment Engine":
@@ -272,11 +272,7 @@ elif menu == "Assessment Engine":
     if "rfp_data" not in st.session_state:
         st.warning("Run RFP first")
     else:
-        st.markdown(ask_ai(f"""
-        Assess maturity and roadmap:
-
-        {st.session_state['rfp_data']['problem']}
-        """))
+        st.markdown(ask_ai("Provide maturity + roadmap"))
 
 elif menu == "Solution Shaping":
 
@@ -288,10 +284,6 @@ elif menu == "Solution Shaping":
         data = st.session_state["rfp_data"]
 
         st.markdown(ask_ai(f"""
-        Provide precise solution:
-
-        Industry: {data['industry']}
-        Problem: {data['problem']}
-
-        Output bullets only.
+        Provide short solution bullets for:
+        {data['problem']}
         """))
