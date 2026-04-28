@@ -69,7 +69,7 @@ def read_excel(file):
     return df.head(50).to_string()
 
 # -----------------------------
-# PPT
+# PPT GENERATOR
 # -----------------------------
 def create_ppt(text, fig):
     prs = Presentation()
@@ -86,7 +86,7 @@ def create_ppt(text, fig):
     img.seek(0)
 
     slide = prs.slides.add_slide(prs.slide_layouts[5])
-    slide.shapes.title.text = "Opportunity Analysis"
+    slide.shapes.title.text = "Opportunity Snapshot"
     slide.shapes.add_picture(img, Inches(1), Inches(2), width=Inches(6))
 
     ppt = BytesIO()
@@ -128,19 +128,21 @@ if menu == "RFP Intelligence":
 
         if st.button("Evaluate RFP"):
 
-            prompt = f"""
-            Extract structured insights from RFP.
+            # -----------------------------
+            # STEP 1: JSON EXTRACTION
+            # -----------------------------
+            prompt_json = f"""
+            Extract structured insights.
 
             IMPORTANT:
-            - Industry must be BUSINESS domain (Healthcare, Banking, Retail, Telecom, etc.)
-            - DO NOT return ITSM, ITAM, tools, or services as industry
+            - Industry must be BUSINESS domain (Healthcare, Banking, Retail, Telecom etc.)
+            - NOT ITSM / ITAM
 
-            Return STRICT JSON:
+            Return JSON:
 
             {{
               "industry": "",
               "problem": "",
-              "requirements": "",
               "risk_score": 1-5,
               "complexity_score": 1-5,
               "effort_score": 1-5,
@@ -151,23 +153,42 @@ if menu == "RFP Intelligence":
             {content[:4000]}
             """
 
-            raw = ask_ai(prompt)
+            raw = ask_ai(prompt_json)
 
             try:
                 data = json.loads(raw)
             except:
-                st.error("⚠️ Parsing error. Try again.")
+                st.error("⚠️ Parsing error")
                 st.write(raw)
                 st.stop()
 
             st.session_state["rfp_data"] = data
             st.session_state["rfp_content"] = content
 
-            st.subheader("📌 Key Insights")
-            st.write(data)
+            # -----------------------------
+            # STEP 2: SUMMARY OUTPUT
+            # -----------------------------
+            prompt_summary = f"""
+            Create consulting summary.
+
+            Provide:
+            - Executive Summary (3 bullets)
+            - Key Insights (5 bullets)
+            - Key Risks (3 bullets)
+
+            RFP:
+            {content[:4000]}
+            """
+
+            summary = ask_ai(prompt_summary)
+
+            st.subheader("📌 RFP Summary & Insights")
+            st.markdown(summary)
+
+            st.success(f"Industry Identified: {data['industry']}")
 
             # -----------------------------
-            # SMART CHART
+            # STEP 3: CHART
             # -----------------------------
             labels = ["Risk", "Complexity", "Effort", "Value"]
             values = [
@@ -181,7 +202,19 @@ if menu == "RFP Intelligence":
             ax.bar(labels, values)
             st.pyplot(fig)
 
-            ppt = create_ppt(str(data), fig)
+            # -----------------------------
+            # STEP 4: METRICS
+            # -----------------------------
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Risk", data["risk_score"])
+            c2.metric("Complexity", data["complexity_score"])
+            c3.metric("Effort", data["effort_score"])
+            c4.metric("Value", data["value_score"])
+
+            # -----------------------------
+            # PPT
+            # -----------------------------
+            ppt = create_ppt(summary, fig)
             st.download_button("📥 Download PPT", ppt, "RFP_Output.pptx")
 
 # =========================================================
@@ -198,16 +231,16 @@ elif menu == "Opportunity Qualification":
         data = st.session_state["rfp_data"]
 
         prompt = f"""
-        Evaluate opportunity based on:
+        Evaluate opportunity.
 
         Industry: {data['industry']}
         Problem: {data['problem']}
 
-        CXBerries capabilities:
+        CXBerries:
         {CXB_CAPABILITIES}
 
         Provide:
-        - Fit score (High/Medium/Low)
+        - Fit (High/Medium/Low)
         - Go/No-Go
         - Reason (short)
         """
@@ -233,15 +266,15 @@ elif menu == "Assessment Engine":
         {data['problem']}
 
         Provide:
-        - Current maturity (Low/Medium/High)
-        - Key gaps (bullet points)
-        - 90-day roadmap (short bullets)
+        - Maturity (Low/Medium/High)
+        - Key gaps (bullets)
+        - 90-day roadmap (bullets)
         """
 
         st.markdown(ask_ai(prompt))
 
 # =========================================================
-# 4. SOLUTION SHAPING
+# 4. SOLUTION
 # =========================================================
 elif menu == "Solution Shaping":
 
@@ -254,21 +287,19 @@ elif menu == "Solution Shaping":
         data = st.session_state["rfp_data"]
 
         prompt = f"""
-        Create VERY PRECISE consulting solution:
+        Provide VERY PRECISE consulting solution:
 
         Industry: {data['industry']}
         Problem: {data['problem']}
 
-        Based on CXBerries capabilities:
+        CXBerries:
         {CXB_CAPABILITIES}
 
-        Output ONLY bullets:
+        Output bullets only:
 
-        - Solution approach (3 bullets)
+        - Solution (3 bullets)
         - Delivery model (1 line)
         - Value (2 bullets)
-
-        Keep it short and sharp.
         """
 
         st.markdown(ask_ai(prompt))
