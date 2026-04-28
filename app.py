@@ -4,6 +4,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pypdf import PdfReader
 import docx
+from pptx import Presentation
+from pptx.util import Inches
 
 # -----------------------
 # PAGE
@@ -31,7 +33,36 @@ def ask_ai(prompt):
         return completion.choices[0].message.content
     except Exception as e:
         return f"Error: {str(e)}"
+def create_ppt(result_text, chart_fig):
+    prs = Presentation()
 
+    # Slide 1: Title
+    slide_layout = prs.slide_layouts[0]
+    slide = prs.slides.add_slide(slide_layout)
+    slide.shapes.title.text = "RFP Evaluation Summary"
+    slide.placeholders[1].text = "AI Consulting Accelerator Output"
+
+    # Slide 2: AI Output (summary)
+    slide_layout = prs.slide_layouts[1]
+    slide = prs.slides.add_slide(slide_layout)
+    slide.shapes.title.text = "Key Insights"
+
+    content = result_text[:1000]  # avoid overflow
+    slide.placeholders[1].text = content
+
+    # Slide 3: Chart
+    chart_path = "/mnt/data/chart.png"
+    chart_fig.savefig(chart_path)
+
+    slide_layout = prs.slide_layouts[5]
+    slide = prs.slides.add_slide(slide_layout)
+    slide.shapes.title.text = "Risk & Complexity Analysis"
+    slide.shapes.add_picture(chart_path, Inches(1), Inches(2), width=Inches(6))
+
+    ppt_path = "/mnt/data/rfp_output.pptx"
+    prs.save(ppt_path)
+
+    return ppt_path
 # -----------------------
 # MENU
 # -----------------------
@@ -170,7 +201,7 @@ elif menu == "RFP Insights Engine":
 
         st.text_area("Preview Content", content[:3000], height=250)
 
-        if st.button("Evaluate RFP"):
+        if st.button("Evaluate RFP/RFQ"):
 
             prompt = f"""
             Act as a senior consulting partner.
@@ -190,15 +221,22 @@ elif menu == "RFP Insights Engine":
 
             st.markdown("---")
 
-            # 📊 Chart
-            st.subheader("📊 Risk & Complexity Visualization")
+# Create chart
+fig, ax = plt.subplots()
+ax.bar(labels, values)
+st.pyplot(fig)
 
-            labels = ["Risk", "Complexity", "Effort", "Impact"]
-            values = [3, 4, 4, 5]
+            # Generate PPT
+ppt_file = create_ppt(result, fig)
 
-            fig, ax = plt.subplots()
-            ax.bar(labels, values)
-            st.pyplot(fig)
+# Download button
+with open(ppt_file, "rb") as f:
+    st.download_button(
+        label="📥 Download PPT Report",
+        data=f,
+        file_name="RFP/RFQ_Evaluation.pptx",
+        mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    )
 
             # 📈 Heat Indicator
             st.subheader("📈 Engagement Heat Indicator")
