@@ -10,10 +10,10 @@ import json, re
 # -----------------------------
 # CONFIG
 # -----------------------------
-st.set_page_config(page_title="CXBERRIES AI Consulting Engine", layout="wide")
+st.set_page_config(page_title="CXBerries AI Engine", layout="wide")
 
 # -----------------------------
-# UI
+# UI STYLING
 # -----------------------------
 st.markdown("""
 <style>
@@ -26,19 +26,7 @@ box-shadow:0px 4px 10px rgba(0,0,0,0.08);margin-bottom:15px;}
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="main-title">🚀 CXBerries AI Consulting Engine</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">RFP Intelligence • Qualification • Assessment • Solution</div>', unsafe_allow_html=True)
-
-# -----------------------------
-# CXB CAPABILITIES
-# -----------------------------
-CXB = """
-ITSM Consulting
-ITAM Governance
-Service Desk Transformation
-Automation & AI Ops
-Experience Management
-Process Optimization
-"""
+st.markdown('<div class="sub-title">RFP Intelligence • Opportunity • Assessment • Solution</div>', unsafe_allow_html=True)
 
 # -----------------------------
 # API
@@ -47,13 +35,12 @@ client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=st.secrets["OPENROUTER_API_KEY"]
 )
-
 MODEL = "openai/gpt-3.5-turbo"
 
 def ask_ai(prompt):
     return client.chat.completions.create(
         model=MODEL,
-        messages=[{"role":"user","content":prompt}]
+        messages=[{"role": "user", "content": prompt}]
     ).choices[0].message.content
 
 # -----------------------------
@@ -76,7 +63,7 @@ def read_file(file):
 # CHUNKING
 # -----------------------------
 def chunk(text, size=2000):
-    return [text[i:i+size] for i in range(0,len(text),size)]
+    return [text[i:i+size] for i in range(0, len(text), size)]
 
 def compress(text):
     chunks = chunk(text)
@@ -105,22 +92,28 @@ def safe_parse(raw):
 # CHARTS
 # -----------------------------
 def radar(d):
-    labels=["Risk","Complexity","Effort","Value"]
-    vals=[d["risk_score"],d["complexity_score"],d["effort_score"],d["value_score"]]
-    vals+=vals[:1]
-    ang=np.linspace(0,2*np.pi,len(labels),endpoint=False).tolist()+[0]
+    labels = ["Risk","Complexity","Effort","Value"]
+    vals = [d["risk_score"],d["complexity_score"],d["effort_score"],d["value_score"]]
+    vals += vals[:1]
+    ang = np.linspace(0,2*np.pi,len(labels),endpoint=False).tolist()
+    ang += ang[:1]
 
-    fig,ax=plt.subplots(subplot_kw=dict(polar=True))
-    ax.plot(ang,vals); ax.fill(ang,vals,alpha=0.3)
-    ax.set_xticks(ang[:-1]); ax.set_xticklabels(labels)
+    fig, ax = plt.subplots(subplot_kw=dict(polar=True))
+    ax.plot(ang, vals)
+    ax.fill(ang, vals, alpha=0.3)
+    ax.set_xticks(ang[:-1])
+    ax.set_xticklabels(labels)
     return fig
 
 def matrix(d):
-    fig,ax=plt.subplots()
-    ax.scatter(d["risk_score"],d["value_score"],s=200)
-    ax.set_xlim(0,5); ax.set_ylim(0,5)
-    ax.set_xlabel("Risk"); ax.set_ylabel("Value")
-    ax.axhline(3); ax.axvline(3)
+    fig, ax = plt.subplots()
+    ax.scatter(d["risk_score"], d["value_score"], s=200)
+    ax.set_xlim(0,5)
+    ax.set_ylim(0,5)
+    ax.set_xlabel("Risk (CXB Delivery Risk)")
+    ax.set_ylabel("Value (Business Impact)")
+    ax.axhline(3)
+    ax.axvline(3)
     return fig
 
 # -----------------------------
@@ -164,10 +157,10 @@ if menu == "RFP Intelligence":
         Based ONLY on:
         {refined}
 
-        Give:
-        - Executive Summary
-        - Key Insights
-        - Key Risks
+        Provide:
+        - Executive Summary (3 bullets)
+        - Key Insights (5 bullets)
+        - Key Risks (3 bullets)
         """)
 
         st.markdown("### 📌 Summary")
@@ -180,103 +173,114 @@ if menu == "RFP Intelligence":
     if "data" in st.session_state:
         d = st.session_state["data"]
 
-        st.markdown('<div class="highlight">CXBerries delivery perspective</div>', unsafe_allow_html=True)
+        st.markdown('<div class="highlight">📍 CXBerries Delivery Perspective</div>', unsafe_allow_html=True)
 
+        # Radar
+        st.subheader("📊 Multi-Dimensional View")
         st.pyplot(radar(d))
+
+        st.markdown("""
+- Risk → Delivery risk  
+- Complexity → Technical/process difficulty  
+- Effort → Implementation workload  
+- Value → Business impact  
+
+Higher = higher intensity
+""")
+
+        # Matrix
+        st.subheader("📍 Opportunity Positioning")
         st.pyplot(matrix(d))
+
+        st.markdown("""
+- Top Right → Strategic (High Value, High Risk)  
+- Bottom Right → Ideal  
+- Top Left → Avoid  
+- Bottom Left → Low priority  
+""")
+
+        # AI Interpretation
+        explain = ask_ai(f"""
+        Based on RFP:
+        {st.session_state['text']}
+
+        Scores:
+        Risk {d['risk_score']}
+        Complexity {d['complexity_score']}
+        Effort {d['effort_score']}
+        Value {d['value_score']}
+
+        Explain:
+        - What charts indicate
+        - Decision (Go / Conditional / No)
+        """)
+
+        st.subheader("🧠 Interpretation")
+        st.markdown(explain)
 
 # =========================================================
 # OPPORTUNITY
 # =========================================================
 elif menu == "Opportunity":
 
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-
     if "data" not in st.session_state:
         st.warning("Upload RFP first")
     else:
         d = st.session_state["data"]
         t = st.session_state["text"]
 
-        output = ask_ai(f"""
-        Based on RFP:
+        st.markdown(ask_ai(f"""
+        Based on:
         {t}
 
-        CXBerries capabilities:
-        {CXB}
+        CXBerries:
+        ITSM, ITAM, Automation
 
         Identify:
-
-        1. Core opportunity
-        2. Adjacent opportunities (cross-sell)
-        3. How CXB enhances delivery
-        4. Expansion potential
-
-        Be specific to RFP.
-        """)
-
-        st.markdown(output)
-
-    st.markdown('</div>', unsafe_allow_html=True)
+        - Core opportunity
+        - Cross-sell opportunities
+        - How CXB enhances delivery
+        """))
 
 # =========================================================
 # ASSESSMENT
 # =========================================================
 elif menu == "Assessment":
 
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-
     if "data" not in st.session_state:
         st.warning("Upload RFP first")
     else:
-        d = st.session_state["data"]
         t = st.session_state["text"]
 
-        output = ask_ai(f"""
-        Based on RFP:
+        st.markdown(ask_ai(f"""
+        Based on:
         {t}
 
         Provide:
-
-        1. Current maturity (Low/Medium/High)
-        2. Key gaps (bullets)
-        3. Detailed roadmap:
-
-           Phase 1 (0-30 days)
-           Phase 2 (30-60 days)
-           Phase 3 (60-90 days)
-
-        Ensure roadmap aligns with CXBerries services.
-        """)
-
-        st.markdown(output)
-
-    st.markdown('</div>', unsafe_allow_html=True)
+        - Current maturity
+        - Gaps
+        - Roadmap:
+          0-30 days
+          30-60 days
+          60-90 days
+        """))
 
 # =========================================================
 # SOLUTION
 # =========================================================
 elif menu == "Solution":
 
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-
     if "data" not in st.session_state:
         st.warning("Upload RFP first")
     else:
-        d = st.session_state["data"]
         t = st.session_state["text"]
 
-        output = ask_ai(f"""
-        Based on RFP:
+        st.markdown(ask_ai(f"""
+        Based on:
         {t}
 
-        Provide concise solution:
-
-        - Approach (3 bullets)
+        Provide:
+        - Solution approach
         - Delivery model
         - Value
-        """)
-
-        st.markdown(output)
-
-    st.markdown('</div>', unsafe_allow_html=True)
+        """))
