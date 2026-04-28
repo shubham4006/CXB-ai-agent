@@ -79,9 +79,13 @@ st.markdown("---")
 # -----------------------------
 api_key = st.secrets.get("OPENAI_API_KEY")
 
-if not api_key:
-    st.error("⚠️ OpenAI API Key not found. Please add it in Streamlit Secrets.")
+if "OPENAI_API_KEY" not in st.secrets:
+    st.error("❌ API Key NOT detected in secrets")
+    st.write(st.secrets)
     st.stop()
+
+api_key = st.secrets["OPENAI_API_KEY"]
+st.success("✅ API Key loaded successfully")
 
 client = OpenAI(api_key=api_key)
 
