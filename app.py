@@ -24,10 +24,9 @@ client = OpenAI(
 def ask_ai(prompt):
     try:
         completion = client.chat.completions.create(
-            model="openai/gpt-3.5-turbo",
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7
         )
         return completion.choices[0].message.content
     except Exception as e:
@@ -78,7 +77,7 @@ if menu == "Proposal Generator":
         with st.spinner("Generating Proposal..."):
             result = ask_ai(prompt)
 
-        st.write(result)
+        st.markdown(result)
 
 # ==========================================
 # ASSESSMENT
@@ -181,20 +180,76 @@ elif menu == "RFP Insights Engine":
 
         if st.button("Evaluate RFP"):
 
-            prompt = f"""
-            Act as a senior consulting bid manager.
+    prompt = f"""
+    Act as a senior consulting partner.
 
-            Review the following RFP:
+    Analyze the RFP:
 
-            {content[:5000]}
+    {content[:5000]}
 
-            Provide:
-            1. Executive Summary
-            2. Scope of Work
-            3. Key Risks
-            4. Recommended Solution
-            5. Win Strategy
-            """
+    Provide structured consulting insights including risks, solution, roadmap, team model, and strategy.
+    """
+
+    with st.spinner("Evaluating RFP..."):
+        result = ask_ai(prompt)
+
+    # -----------------------------
+    # OUTPUT
+    # -----------------------------
+    st.subheader("📌 RFP Evaluation Output")
+    st.markdown(result)
+
+    st.markdown("---")
+
+    # -----------------------------
+    # STEP 3: CHART
+    # -----------------------------
+    import numpy as np
+
+    st.subheader("📊 Risk & Complexity Visualization")
+
+    labels = ["Risk", "Complexity", "Effort", "Impact"]
+    values = [3, 4, 4, 5]
+
+    fig, ax = plt.subplots()
+    ax.bar(labels, values)
+    st.pyplot(fig)
+
+    # -----------------------------
+    # STEP 4: HEAT INDICATOR
+    # -----------------------------
+    st.subheader("📈 Engagement Heat Indicator")
+
+    score = sum(values) / len(values)
+
+    if score >= 4:
+        st.success("High Complexity Engagement")
+    elif score >= 3:
+        st.warning("Moderate Complexity Engagement")
+    else:
+        st.info("Low Complexity Engagement")
+
+    # -----------------------------
+    # STEP 5: TRANSFORMATION DIAGRAM
+    # -----------------------------
+    st.subheader("🔄 Transformation Journey")
+
+    st.code("""
+    Current State
+        ↓
+    Assessment & Discovery
+        ↓
+    Future State Design
+        ↓
+    Implementation
+        ↓
+    Steady State Optimization
+    """)
+
+    # -----------------------------
+    # STEP 6: CLEAN SEPARATOR
+    # -----------------------------
+    st.markdown("---")
 
             result = ask_ai(prompt)
 
