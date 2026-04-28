@@ -1,285 +1,236 @@
 import streamlit as st
 from openai import OpenAI
-import pandas as pd
 import matplotlib.pyplot as plt
-from pypdf import PdfReader
-import docx
 from pptx import Presentation
 from pptx.util import Inches
 from io import BytesIO
 
-# -----------------------
-# PAGE
-# -----------------------
-st.set_page_config(page_title="CXBerries AI Accelerator", layout="wide")
+# -----------------------------
+# CONFIG
+# -----------------------------
+st.set_page_config(page_title="CXBERRIES AI Consulting Engine", layout="wide")
 
-st.title("🚀 CXBERRIES AI Consulting Accelerator")
-st.subheader("Reduce proposal, assessment & analysis effort by 50–70%")
+# -----------------------------
+# CUSTOM UI
+# -----------------------------
+st.markdown("""
+<style>
+.main-title {
+    font-size: 36px;
+    font-weight: 700;
+    color: #1f4e79;
+    text-align: center;
+}
+.sub-title {
+    font-size: 18px;
+    text-align: center;
+    color: #555;
+    margin-bottom: 20px;
+}
+.card {
+    background-color: white;
+    padding: 18px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+    margin-bottom: 15px;
+}
+.stButton>button {
+    background-color: #1f77b4;
+    color: white;
+    border-radius: 8px;
+    padding: 8px 16px;
+}
+</style>
+""", unsafe_allow_html=True)
 
-# -----------------------
-# OPENROUTER CLIENT
-# -----------------------
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=st.secrets["OPENROUTER_API_KEY"]
-)
+# -----------------------------
+# HEADER
+# -----------------------------
+st.markdown('<div class="main-title">🚀 CXBERRIES AI Consulting Decision Engine</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-title">AI-powered consulting accelerator for RFP evaluation, diagnostics & solution design</div>', unsafe_allow_html=True)
+
+# -----------------------------
+# METRICS
+# -----------------------------
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("Modules", "4")
+col2.metric("Use Cases", "RFP / ITSM / ITAM")
+col3.metric("Efficiency Gain", "60%")
+col4.metric("AI Powered", "Yes")
+
+st.markdown("### 🧩 Capabilities")
+
+col1, col2 = st.columns(2)
+with col1:
+    st.markdown('<div class="card"><b>📑 RFP Intelligence</b><br>Analyze RFPs and extract insights.</div>', unsafe_allow_html=True)
+with col2:
+    st.markdown('<div class="card"><b>🎯 Qualification</b><br>Evaluate bid feasibility.</div>', unsafe_allow_html=True)
+
+col3, col4 = st.columns(2)
+with col3:
+    st.markdown('<div class="card"><b>📊 Assessment</b><br>Maturity & gap analysis.</div>', unsafe_allow_html=True)
+with col4:
+    st.markdown('<div class="card"><b>🧠 Solution Design</b><br>Build consulting solution.</div>', unsafe_allow_html=True)
+
+st.markdown("---")
+
+# -----------------------------
+# OPENAI
+# -----------------------------
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 def ask_ai(prompt):
     try:
-        completion = client.chat.completions.create(
+        res = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7
         )
-        return completion.choices[0].message.content
+        return res.choices[0].message.content
     except Exception as e:
         return f"Error: {str(e)}"
-def create_ppt(result_text, chart_fig):
-    from pptx import Presentation
-    from pptx.util import Inches
 
+# -----------------------------
+# PPT FUNCTION
+# -----------------------------
+def create_ppt(result, fig):
     prs = Presentation()
 
-    # Slide 1: Title
-    slide_layout = prs.slide_layouts[0]
-    slide = prs.slides.add_slide(slide_layout)
-    slide.shapes.title.text = "RFP Evaluation Summary"
-    slide.placeholders[1].text = "AI Consulting Accelerator Output"
+    slide = prs.slides.add_slide(prs.slide_layouts[0])
+    slide.shapes.title.text = "RFP Evaluation"
+    slide.placeholders[1].text = "CXBerries AI Accelerator"
 
-    # Slide 2: AI Output
-    slide_layout = prs.slide_layouts[1]
-    slide = prs.slides.add_slide(slide_layout)
-    slide.shapes.title.text = "Key Insights"
-    slide.placeholders[1].text = result_text[:1000]
+    slide = prs.slides.add_slide(prs.slide_layouts[1])
+    slide.shapes.title.text = "Insights"
+    slide.placeholders[1].text = result[:1000]
 
-    # Slide 3: Chart (IN MEMORY FIX)
-    img_stream = BytesIO()
-    chart_fig.savefig(img_stream, format="png")
-    img_stream.seek(0)
+    img = BytesIO()
+    fig.savefig(img, format="png")
+    img.seek(0)
 
-    slide_layout = prs.slide_layouts[5]
-    slide = prs.slides.add_slide(slide_layout)
-    slide.shapes.title.text = "Risk & Complexity Analysis"
-    slide.shapes.add_picture(img_stream, Inches(1), Inches(2), width=Inches(6))
+    slide = prs.slides.add_slide(prs.slide_layouts[5])
+    slide.shapes.title.text = "Analysis"
+    slide.shapes.add_picture(img, Inches(1), Inches(2), width=Inches(6))
 
-    # Save PPT to memory
-    ppt_stream = BytesIO()
-    prs.save(ppt_stream)
-    ppt_stream.seek(0)
+    ppt = BytesIO()
+    prs.save(ppt)
+    ppt.seek(0)
 
-    return ppt_stream
-# -----------------------
-# MENU
-# -----------------------
+    return ppt
+
+# -----------------------------
+# SIDEBAR
+# -----------------------------
+st.sidebar.markdown("## 🧭 Navigation")
 menu = st.sidebar.selectbox(
     "Select Module",
-    [
-        "Proposal Generator",
-        "Assessment Engine",
-        "RFP Insights Engine"
-    ]
+    ["RFP Intelligence", "Opportunity Qualification", "Assessment Engine", "Solution Shaping"]
 )
-# ==========================================
-# PROPOSAL GENERATOR
-# ==========================================
-if menu == "Proposal Generator":
 
-    st.header("📄 Proposal Generator")
+# =========================================================
+# RFP INTELLIGENCE
+# =========================================================
+if menu == "RFP/RFQ Intelligence":
 
-    client_name = st.text_input("Client Name")
-    industry = st.text_input("Industry")
-    problem = st.text_area("Problem Statement")
-    scope = st.text_area("Scope Needed")
+    st.header("📑 RFP Intelligence Engine")
 
-    if st.button("Generate Proposal"):
+    file = st.file_uploader("Upload RFP (.txt)", type=["txt"])
 
-        prompt = f"""
-        Create a premium consulting proposal.
+    if file:
+        content = file.read().decode("utf-8")
 
-        Client: {client_name}
-        Industry: {industry}
-        Problem: {problem}
-        Scope: {scope}
+        st.text_area("Preview", content[:1500], height=200)
 
-        Include:
-        1 Executive Summary
-        2 Scope of Work
-        3 Deliverables
-        4 Timeline
-        5 Team Structure
-        6 Risks
-        """
-
-        with st.spinner("Generating Proposal..."):
-            result = ask_ai(prompt)
-
-        st.markdown(result)
-
-# ==========================================
-# ASSESSMENT
-# ==========================================
-elif menu == "Assessment Engine":
-
-    st.header("📊 Assessment Engine")
-
-    incident = st.slider("Incident Mgmt",1,5,3)
-    change = st.slider("Change Mgmt",1,5,3)
-    cmdb = st.slider("CMDB",1,5,3)
-    automation = st.slider("Automation",1,5,3)
-    reporting = st.slider("Reporting",1,5,3)
-
-    if st.button("Run Assessment"):
-
-        score = (incident + change + cmdb + automation + reporting) / 5
-
-        st.metric("Overall Score", round(score,2))
-
-        labels = ['Incident','Change','CMDB','Automation','Reporting']
-        vals = [incident, change, cmdb, automation, reporting]
-
-        fig, ax = plt.subplots()
-        ax.bar(labels, vals)
-        st.pyplot(fig)
-
-        # -----------------------------
-        # ADD THIS AI PART HERE
-        # -----------------------------
-        prompt = f"""
-        Analyze these ITSM maturity scores:
-
-        Incident Management: {incident}
-        Change Management: {change}
-        CMDB: {cmdb}
-        Automation: {automation}
-        Reporting: {reporting}
-
-        Give:
-        1. Current maturity summary
-        2. Top 3 gaps
-        3. Recommended actions
-        4. 90-day roadmap
-        """
-
-        with st.spinner("Generating Recommendations..."):
-            result = ask_ai(prompt)
-
-        st.subheader("📌 AI Recommendations")
-        st.write(result)
-
-# ==========================================
-# DATA INSIGHTS
-# ==========================================
-elif menu == "RFP Insights Engine":
-
-    st.header("📑 RFP Insights Engine")
-
-    uploaded_file = st.file_uploader(
-        "Upload RFP File",
-        type=["pdf", "docx", "txt"]
-    )
-
-    def read_pdf(file):
-        text = ""
-        reader = PdfReader(file)
-        for page in reader.pages:
-            extracted = page.extract_text()
-            if extracted:
-                text += extracted + "\n"
-        return text
-
-    def read_docx(file):
-        doc = docx.Document(file)
-        return "\n".join([para.text for para in doc.paragraphs])
-
-    if uploaded_file:
-
-        file_name = uploaded_file.name.lower()
-
-        if file_name.endswith(".pdf"):
-            content = read_pdf(uploaded_file)
-        elif file_name.endswith(".docx"):
-            content = read_docx(uploaded_file)
-        else:
-            content = uploaded_file.read().decode("utf-8")
-
-        st.success("✅ File uploaded successfully")
-        st.text_area("Preview Content", content[:3000], height=250)
-
-        # -----------------------------
-        # BUTTON BLOCK (CLEAN)
-        # -----------------------------
         if st.button("Evaluate RFP/RFQ"):
 
             prompt = f"""
-            Act as a senior consulting partner.
+            Analyze this RFP:
 
-            Analyze the RFP:
+            {content[:4000]}
 
-            {content[:5000]}
-
-            Provide structured consulting insights including risks, solution, roadmap, team model, and strategy.
+            Provide:
+            - Summary
+            - Risks
+            - Solution direction
+            - Win strategy
             """
 
-            with st.spinner("Evaluating RFP..."):
+            with st.spinner("Analyzing..."):
                 result = ask_ai(prompt)
 
-            st.subheader("📌 RFP Evaluation Output")
             st.markdown(result)
 
             st.markdown("---")
 
-            # 📊 Chart
-            st.subheader("📊 Risk & Complexity Visualization")
-
             labels = ["Risk", "Complexity", "Effort", "Impact"]
-            values = [3, 4, 4, 5]
+            values = [3,4,4,5]
 
             fig, ax = plt.subplots()
             ax.bar(labels, values)
             st.pyplot(fig)
 
-            st.markdown("---")
+            ppt = create_ppt(result, fig)
 
-            # 📈 Heat Indicator
-            st.subheader("📈 Engagement Heat Indicator")
+            st.download_button("📥 Download PPT", ppt, "RFP_Output.pptx")
 
-            score = sum(values) / len(values)
+# =========================================================
+# QUALIFICATION
+# =========================================================
+elif menu == "Opportunity Qualification":
 
-            if score >= 4:
-                st.success("High Complexity Engagement")
-            elif score >= 3:
-                st.warning("Moderate Complexity Engagement")
-            else:
-                st.info("Low Complexity Engagement")
+    st.header("🎯 Qualification Engine")
 
-            st.markdown("---")
+    s = st.slider("Strategic Fit",1,5,3)
+    c = st.slider("Capability",1,5,3)
+    v = st.slider("Value",1,5,3)
+    r = st.slider("Risk",1,5,3)
 
-            # 🔄 Diagram
-            st.subheader("🔄 Transformation Journey")
+    if st.button("Evaluate"):
 
-            st.code("""
-Current State
-    ↓
-Assessment & Discovery
-    ↓
-Future State Design
-    ↓
-Implementation
-    ↓
-Steady State Optimization
-""")
+        score = (s+c+v)-r
+        st.metric("Score", score)
 
-            st.markdown("---")
+        prompt = f"Evaluate opportunity: {s},{c},{v},{r}"
+        st.markdown(ask_ai(prompt))
 
-            # 📥 PPT Download
-            ppt_file = create_ppt(result, fig)
+# =========================================================
+# ASSESSMENT
+# =========================================================
+elif menu == "Assessment Engine":
 
-            st.download_button(
-    label="📥 Download PPT Report",
-    data=ppt_file,
-    file_name="RFP_Evaluation.pptx",
-)
-            result = ask_ai(prompt)
+    st.header("📊 Assessment")
 
-            st.subheader("📌 RFP Evaluation Output")
-            st.write(result)
+    p = st.slider("Process",1,5,3)
+    t = st.slider("Technology",1,5,3)
+    g = st.slider("Governance",1,5,3)
+    pe = st.slider("People",1,5,3)
+    d = st.slider("Data",1,5,3)
+
+    if st.button("Run Assessment"):
+
+        score = (p+t+g+pe+d)/5
+        st.metric("Maturity", round(score,2))
+
+        labels = ["P","T","G","Pe","D"]
+        values = [p,t,g,pe,d]
+
+        fig, ax = plt.subplots()
+        ax.bar(labels, values)
+        st.pyplot(fig)
+
+        st.markdown(ask_ai(f"Assess maturity {values}"))
+
+# =========================================================
+# SOLUTION
+# =========================================================
+elif menu == "Solution Shaping":
+
+    st.header("🧠 Solution Design")
+
+    problem = st.text_area("Problem")
+    industry = st.text_input("Industry")
+
+    if st.button("Generate Solution"):
+
+        prompt = f"Design solution for {industry}: {problem}"
+        st.markdown(ask_ai(prompt))
