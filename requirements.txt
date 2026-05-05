@@ -5,3 +5,5 @@ python-pptx
 pypdf
 python-docx
 pandas
+requests
+beautifulsoup4
