@@ -220,7 +220,7 @@ if menu == "RFP Intelligence":
 elif menu == "Opportunity":
 
     if "data" not in st.session_state:
-        st.warning("Upload RFP first")
+        st.warning("Upload RFP/RFQ first")
     else:
         t = st.session_state["text"]
 
