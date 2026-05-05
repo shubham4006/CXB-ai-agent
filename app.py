@@ -6,6 +6,8 @@ from pypdf import PdfReader
 import docx
 import pandas as pd
 import json, re
+import requests
+from bs4 import BeautifulSoup
 
 # -----------------------------
 # CONFIG
@@ -25,7 +27,7 @@ box-shadow:0px 4px 10px rgba(0,0,0,0.08);margin-bottom:15px;}
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="main-title"> CXBERRIES AI Consulting Engine</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title">CXBERRIES AI Consulting Engine</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">RFP Intelligence • Opportunity • Assessment • Solution</div>', unsafe_allow_html=True)
 
 # -----------------------------
@@ -35,6 +37,7 @@ client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=st.secrets["OPENROUTER_API_KEY"]
 )
+
 MODEL = "openai/gpt-3.5-turbo"
 
 def ask_ai(prompt):
@@ -42,6 +45,76 @@ def ask_ai(prompt):
         model=MODEL,
         messages=[{"role": "user", "content": prompt}]
     ).choices[0].message.content
+
+# -----------------------------
+# CXB WEBSITE FETCH
+# -----------------------------
+@st.cache_data
+def fetch_cxb_website():
+    try:
+        url = "https://www.cxberries.com/"
+        res = requests.get(url, timeout=10)
+        soup = BeautifulSoup(res.text, "html.parser")
+
+        text = soup.get_text(separator=" ")
+        text = " ".join(text.split())
+
+        return text[:5000]
+
+    except:
+        return "CXB website data not available"
+
+def structure_cxb_capabilities(raw_text):
+    return ask_ai(f"""
+    Extract CXBerries consulting capabilities.
+
+    Format:
+
+    ### Service Areas
+    - ...
+
+    ### Key Offerings
+    - ...
+
+    ### Strength Areas
+    - ...
+
+    Content:
+    {raw_text}
+
+    Rules:
+    - Only CXB services
+    - Bullet points only
+    """)
+
+def get_relevant_capabilities(rfp_text, cxb_capabilities):
+    return ask_ai(f"""
+    Identify ONLY relevant CXB services for this RFP.
+
+    RFP:
+    {rfp_text}
+
+    CXB CAPABILITIES:
+    {cxb_capabilities}
+
+    Output:
+
+    ### Relevant CXB Services
+    - ...
+
+    ### Why These Fit
+    - ...
+
+    Rules:
+    - Remove irrelevant services
+    - Be precise
+    - Bullet points only
+    """)
+
+# Load CXB data once
+if "cxb_capabilities" not in st.session_state:
+    raw_cxb = fetch_cxb_website()
+    st.session_state["cxb_capabilities"] = structure_cxb_capabilities(raw_cxb)
 
 # -----------------------------
 # FILE READ
@@ -98,8 +171,10 @@ def radar(d):
     ang=np.linspace(0,2*np.pi,len(labels),endpoint=False).tolist()+[0]
 
     fig,ax=plt.subplots(subplot_kw=dict(polar=True))
-    ax.plot(ang,vals); ax.fill(ang,vals,alpha=0.3)
-    ax.set_xticks(ang[:-1]); ax.set_xticklabels(labels)
+    ax.plot(ang,vals)
+    ax.fill(ang,vals,alpha=0.3)
+    ax.set_xticks(ang[:-1])
+    ax.set_xticklabels(labels)
     return fig
 
 def matrix(d):
@@ -144,14 +219,19 @@ if menu == "RFP Intelligence":
         """)
 
         data = safe_parse(raw)
+
         st.session_state["data"] = data
         st.session_state["text"] = refined
+
+        # 🔥 RELEVANT CAPABILITIES
+        relevant_cxb = get_relevant_capabilities(refined, st.session_state["cxb_capabilities"])
+        st.session_state["relevant_cxb"] = relevant_cxb
 
         summary = ask_ai(f"""
         Based ONLY on:
         {refined}
 
-        Provide in bullets:
+        Provide:
 
         ### Executive Summary
         - ...
@@ -163,85 +243,69 @@ if menu == "RFP Intelligence":
         - ...
 
         Rules:
-        - Only bullet points
-        - No paragraphs
+        - Bullet points only
         """)
 
-        st.markdown("### 📌 Summary")
         st.markdown(summary)
         st.success(f"Industry: {data['industry']}")
+
+        # Show relevant capabilities
+        st.markdown("### 🎯 Relevant CXB Capabilities")
+        st.markdown(relevant_cxb)
 
     st.markdown('</div>', unsafe_allow_html=True)
 
     if "data" in st.session_state:
         d = st.session_state["data"]
 
-        st.markdown('<div class="highlight">📍 CXBerries Delivery Perspective</div>', unsafe_allow_html=True)
+        st.markdown('<div class="highlight">CXBerries Delivery Perspective</div>', unsafe_allow_html=True)
 
-        st.subheader("📊 Multi-Dimensional View")
         st.pyplot(radar(d))
-
-        st.subheader("📍 Opportunity Positioning")
         st.pyplot(matrix(d))
 
-        explain = ask_ai(f"""
-        Based on:
-        {st.session_state['text']}
-
-        Scores:
-        Risk {d['risk_score']}
-        Complexity {d['complexity_score']}
-        Effort {d['effort_score']}
-        Value {d['value_score']}
-
-        Provide in bullets:
-
-        ### Chart Insights
-        - ...
-
-        ### Interpretation
-        - ...
-
-        ### Recommendation
-        - Go / Conditional / No
-        - Reason
-
-        Rules:
-        - Only bullets
-        - No paragraphs
-        """)
-
-        st.markdown("### 🧠 Interpretation")
-        st.markdown(explain)
-
 # =========================================================
-# OPPORTUNITY
+# OPPORTUNITY (SMART)
 # =========================================================
 elif menu == "Opportunity":
 
     if "data" not in st.session_state:
-        st.warning("Upload RFP/RFQ first")
+        st.warning("Upload RFP first")
     else:
         t = st.session_state["text"]
+        cxb = st.session_state["relevant_cxb"]
 
-        st.markdown(ask_ai(f"""
-        Based on:
+        result = ask_ai(f"""
+        You are a CXBerries consulting strategist.
+
+        RFP:
         {t}
+
+        RELEVANT CXB SERVICES:
+        {cxb}
 
         Provide:
 
         ### Core Opportunity
         - ...
 
-        ### Cross-sell Opportunities
-        - ...
+        ### Cross-Sell Opportunities
+        - Only from relevant services
+
+        ### Service Bundling
+        - Combine relevant services
 
         ### CXB Advantage
-        - ...
+        - Why CXB wins
+
+        ### Expansion Potential
+        - Future opportunities
 
         Rules:
-        - Only bullets
-        """))
+        - ONLY use listed services
+        - Bullet points only
+        """)
+
+        st.markdown(result)
 
 # =========================================================
 # ASSESSMENT
@@ -271,7 +335,7 @@ elif menu == "Assessment":
         - 60–90 days:
 
         Rules:
-        - Only bullets
+        - Bullet points only
         """))
 
 # =========================================================
@@ -300,5 +364,5 @@ elif menu == "Solution":
         - ...
 
         Rules:
-        - Only bullets
+        - Bullet points only
         """))
