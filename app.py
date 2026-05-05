@@ -122,7 +122,7 @@ menu = st.sidebar.selectbox("Navigation",
 if menu == "RFP Intelligence":
 
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    file = st.file_uploader("Upload RFP")
+    file = st.file_uploader("Upload RFP/RFQ")
 
     if file:
         text = read_file(file)
